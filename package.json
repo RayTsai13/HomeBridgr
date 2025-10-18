@@ -1,0 +1,36 @@
+{
+  "name": "homebridgr",
+  "version": "1.0.0",
+  "description": "A Next.js TypeScript application",
+  "homepage": "https://github.com/RayTsai13/HomeBridgr#readme",
+  "bugs": {
+    "url": "https://github.com/RayTsai13/HomeBridgr/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RayTsai13/HomeBridgr.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "start": "next start",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "typescript": "^5.0.0"
+  }
+}
