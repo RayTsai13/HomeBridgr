@@ -1,11 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { analyzeMock } = vi.hoisted(() => ({
-  analyzeMock: vi.fn(),
-}));
+const { analyzeMock, NotConfiguredError } = vi.hoisted(() => {
+  class NotConfiguredError extends Error {
+    constructor(message?: string) {
+      super(message);
+      this.name = "CaptionAnalysisNotConfiguredError";
+    }
+  }
+
+  return {
+    analyzeMock: vi.fn(),
+    NotConfiguredError,
+  };
+});
 
 vi.mock("@/lib/analysis", () => ({
-  analyzeCaptionWithBedrock: analyzeMock,
+  analyzeCaption: analyzeMock,
+  CaptionAnalysisNotConfiguredError: NotConfiguredError,
 }));
 
 import { POST } from "@/app/api/analysis/route";
@@ -23,7 +34,7 @@ describe("app/api/analysis/route", () => {
     analyzeMock.mockReset();
   });
 
-  it("returns analysis from Bedrock helper", async () => {
+  it("returns analysis from helper", async () => {
     const analysisResult = {
       terms: [
         { term: "field trip", explanation: "Indicates an upcoming excursion." },
@@ -76,8 +87,25 @@ describe("app/api/analysis/route", () => {
     expect(analyzeMock).not.toHaveBeenCalled();
   });
 
-  it("propagates Bedrock failures", async () => {
-    analyzeMock.mockRejectedValueOnce(new Error("Bedrock offline"));
+  it("returns 501 when caption analysis is not configured", async () => {
+    analyzeMock.mockRejectedValueOnce(
+      new NotConfiguredError("Caption analysis missing.")
+    );
+
+    const response = await POST(
+      jsonRequest({ message: "Caption for analysis" })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(501);
+    expect(body).toMatchObject({
+      error: "Caption analysis is not yet configured.",
+      details: "Caption analysis missing.",
+    });
+  });
+
+  it("propagates unexpected failures", async () => {
+    analyzeMock.mockRejectedValueOnce(new Error("Upstream service offline"));
 
     const response = await POST(
       jsonRequest({ message: "Caption for analysis" })
@@ -87,7 +115,7 @@ describe("app/api/analysis/route", () => {
     expect(response.status).toBe(500);
     expect(body).toMatchObject({
       error: "Failed to analyze caption",
-      details: "Bedrock offline",
+      details: "Upstream service offline",
     });
   });
 });

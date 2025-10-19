@@ -48,6 +48,11 @@ In the project directory, you can run:
 - `npm run start` - Runs the built app in production mode
 - `npm run lint` - Runs ESLint to check for code issues
 - `npm run type-check` - Runs TypeScript compiler to check for type errors
+- `npm run bedrock:analyze -- "<caption>"` - Calls the Bedrock-backed caption analyzer from the command line
+
+## AWS Bedrock Integration
+
+See `docs/bedrock_setup.md` for step-by-step instructions on enabling Bedrock and wiring credentials.
 
 ## Learn More
 

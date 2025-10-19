@@ -1,7 +1,7 @@
 import {
-  BedrockRuntimeClient,
-  InvokeModelCommand,
-} from "@aws-sdk/client-bedrock-runtime";
+  BedrockConfigurationError,
+  invokeBedrockModel,
+} from "@/lib/bedrock";
 
 export type TermExplanation = {
   term: string;
@@ -13,80 +13,89 @@ export type CaptionAnalysis = {
   rawModelText: string;
 };
 
-type BedrockOptions = {
+export type AnalyzeCaptionOptions = {
   modelId?: string;
   maxTokens?: number;
+  temperature?: number;
+  topP?: number;
 };
 
-type BedrockTextContent = {
+const textDecoder = new TextDecoder();
+
+export class CaptionAnalysisNotConfiguredError extends Error {
+  constructor(
+    message = "Caption analysis is not yet configured. Follow the AWS Bedrock setup guide to enable this feature."
+  ) {
+    super(message);
+    this.name = "CaptionAnalysisNotConfiguredError";
+  }
+}
+
+type BedrockContentBlock = {
   type?: string;
   text?: string;
 };
 
-type BedrockResponse = {
+type BedrockResponseShape = {
+  content?: BedrockContentBlock[];
   outputText?: string;
   completion?: string;
   results?: Array<{ text?: string }>;
-  content?: BedrockTextContent[];
 };
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
-
-let cachedClient: BedrockRuntimeClient | null = null;
-
-function getClient() {
-  if (cachedClient) {
-    return cachedClient;
-  }
-
-  const region =
-    process.env.AWS_BEDROCK_REGION ||
-    process.env.AWS_REGION ||
-    process.env.AWS_DEFAULT_REGION;
-
-  if (!region) {
-    throw new Error(
-      "Missing AWS region configuration. Set AWS_BEDROCK_REGION or AWS_REGION."
-    );
-  }
-
-  cachedClient = new BedrockRuntimeClient({ region });
-  return cachedClient;
-}
-
-function buildPrompt(caption: string) {
+function buildPrompt(caption: string): string {
   return [
-    "You are helping teachers analyze student social media captions.",
-    "Extract 3 to 7 key terms or phrases from the caption and explain their significance for a teacher.",
+    "You help families and friends living in a student's home country make sense of that student's social media captions.",
+    "Identify words, abbreviations, emojis, locations, or cultural references that might be unfamiliar to people who do not live in the student's current community or country.",
+    "List each potentially confusing item with a concise 1-2 sentence explanation that references the caption and explains why someone back home might not understand it.",
     "Respond with strict JSON matching this schema:",
     '{ "terms": [ { "term": string, "explanation": string } ] }',
-    "The explanations should be one or two sentences long, informative, and reference the original caption when relevant.",
+    "Provide between 2 and 7 terms when possible. If nothing will be confusing, include one entry that gently explains why the caption is already clear.",
     "Caption:",
-    caption,
+    caption.trim(),
   ].join("\n\n");
 }
 
-function extractContentText(response: BedrockResponse): string {
-  if (response.content?.length) {
-    const item = response.content.find((entry) => entry.text);
-    if (item?.text) {
-      return item.text;
+function decodeBody(body: unknown): string {
+  if (!body) {
+    return "";
+  }
+
+  if (typeof body === "string") {
+    return body;
+  }
+
+  if (body instanceof Uint8Array) {
+    return textDecoder.decode(body);
+  }
+
+  if (body instanceof ArrayBuffer) {
+    return textDecoder.decode(new Uint8Array(body));
+  }
+
+  throw new Error("Unsupported Bedrock response format.");
+}
+
+function extractModelText(payload: BedrockResponseShape): string {
+  if (payload.content?.length) {
+    const firstText = payload.content.find((block) => block.text?.trim());
+    if (firstText?.text) {
+      return firstText.text;
     }
   }
 
-  if (response.outputText) {
-    return response.outputText;
+  if (payload.outputText) {
+    return payload.outputText;
   }
 
-  if (response.completion) {
-    return response.completion;
+  if (payload.completion) {
+    return payload.completion;
   }
 
-  if (response.results?.length) {
-    const item = response.results.find((entry) => entry?.text);
-    if (item?.text) {
-      return item.text;
+  if (payload.results?.length) {
+    const firstResult = payload.results.find((entry) => entry.text?.trim());
+    if (firstResult?.text) {
+      return firstResult.text;
     }
   }
 
@@ -132,81 +141,100 @@ function normaliseTerms(value: unknown): TermExplanation[] {
 
   if (!terms.length) {
     throw new Error(
-      "Bedrock returned an empty or invalid `terms` array. Try adjusting the caption or prompt."
+      "Bedrock returned an empty or invalid `terms` array. Update the caption or adjust the prompt."
     );
   }
 
   return terms;
 }
 
-export async function analyzeCaptionWithBedrock(
+export async function analyzeCaption(
   caption: string,
-  options: BedrockOptions = {}
+  options: AnalyzeCaptionOptions = {}
 ): Promise<CaptionAnalysis> {
-  const modelId = options.modelId || process.env.BEDROCK_MODEL_ID;
-
-  if (!modelId) {
-    throw new Error(
-      "Missing Bedrock model identifier. Set BEDROCK_MODEL_ID or provide `modelId`."
-    );
+  if (typeof caption !== "string" || !caption.trim()) {
+    throw new Error("Caption must be a non-empty string.");
   }
 
-  const client = getClient();
-  const prompt = buildPrompt(caption);
+  const modelId = options.modelId ?? process.env.BEDROCK_MODEL_ID;
+
+  if (!modelId) {
+    throw new CaptionAnalysisNotConfiguredError(
+      "Missing BEDROCK_MODEL_ID environment variable. Set it to your chosen Bedrock model (for example, anthropic.claude-3-haiku-20240307-v1:0)."
+    );
+  }
 
   const payload = {
     anthropic_version: "bedrock-2023-05-31",
     max_tokens: options.maxTokens ?? 400,
+    temperature: options.temperature ?? 0,
+    top_p: options.topP ?? 0.999,
     messages: [
       {
-        role: "user",
+        role: "user" as const,
         content: [
           {
-            type: "text",
-            text: prompt,
+            type: "text" as const,
+            text: buildPrompt(caption),
           },
         ],
       },
     ],
   };
 
-  const command = new InvokeModelCommand({
-    modelId,
-    body: textEncoder.encode(JSON.stringify(payload)),
-    contentType: "application/json",
-    accept: "application/json",
-  });
-
-  const response = await client.send(command);
-  const body = textDecoder.decode(response.body);
-
-  let parsedResponse: BedrockResponse;
+  let responseBody: string;
 
   try {
-    parsedResponse = JSON.parse(body) as BedrockResponse;
+    const response = await invokeBedrockModel({
+      modelId,
+      body: JSON.stringify(payload),
+      contentType: "application/json",
+      accept: "application/json",
+    });
+
+    responseBody = decodeBody(response.body);
+  } catch (error) {
+    if (error instanceof BedrockConfigurationError) {
+      throw new CaptionAnalysisNotConfiguredError(error.message);
+    }
+
+    throw error;
+  }
+
+  if (!responseBody) {
+    throw new Error("Bedrock response body was empty.");
+  }
+
+  let parsed: BedrockResponseShape;
+
+  try {
+    parsed = JSON.parse(responseBody) as BedrockResponseShape;
   } catch (error) {
     throw new Error(
-      `Bedrock response is not valid JSON. Received: ${body.slice(0, 200)}`
+      `Bedrock response was not valid JSON. Received: ${responseBody.slice(
+        0,
+        200
+      )}`
     );
   }
 
-  const modelText = extractContentText(parsedResponse);
+  const modelText = extractModelText(parsed);
 
   if (!modelText) {
     throw new Error("Bedrock response did not include any text output.");
   }
 
-  let structuredOutput: { terms?: unknown };
+  let structured: { terms?: unknown };
 
   try {
-    structuredOutput = JSON.parse(modelText);
+    structured = JSON.parse(modelText) as { terms?: unknown };
   } catch (error) {
     throw new Error(
-      "Bedrock response is not valid JSON. Ensure the model prompt enforces JSON output."
+      "Bedrock text output was not valid JSON. Ensure the prompt enforces JSON output."
     );
   }
 
-  const terms = normaliseTerms(structuredOutput.terms);
+  const terms = normaliseTerms(structured.terms);
 
   return {
     terms,

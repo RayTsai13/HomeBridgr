@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { analyzeCaptionWithBedrock } from "@/lib/analysis";
+import {
+  CaptionAnalysisNotConfiguredError,
+  analyzeCaption,
+} from "@/lib/analysis";
 
 type AnalysisRequestPayload = {
   message?: unknown;
@@ -28,10 +31,20 @@ export async function POST(request: Request) {
   }
 
   try {
-    const analysis = await analyzeCaptionWithBedrock(message.trim());
+    const analysis = await analyzeCaption(message.trim());
 
     return NextResponse.json({ analysis }, { status: 200 });
   } catch (error) {
+    if (error instanceof CaptionAnalysisNotConfiguredError) {
+      return NextResponse.json(
+        {
+          error: "Caption analysis is not yet configured.",
+          details: error.message,
+        },
+        { status: 501 }
+      );
+    }
+
     return NextResponse.json(
       {
         error: "Failed to analyze caption",

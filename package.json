@@ -19,7 +19,8 @@
     "lint": "next lint",
     "start": "next start",
     "test": "vitest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "bedrock:analyze": "tsx scripts/run_bedrock_analysis.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.14",
