@@ -86,6 +86,9 @@ Created via `/api/community/post`.
 | `link_url` | text | Optional URL shared to the community. |
 | `image_url` | text | Optional image URL. |
 | `created_at` | timestamptz | Defaults to `now()`. |
+| `analysis_terms` | jsonb | Array of `{ term, explanation }` persisted after text analysis. |
+| `analysis_raw_text` | text | Raw JSON emitted by the model. |
+| `analysis_generated_at` | timestamptz | Timestamp when analysis was saved. |
 
 ### postcard_collections
 

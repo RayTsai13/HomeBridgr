@@ -212,11 +212,20 @@ function mapApiPost(record: ApiPostRecord): Post | null {
   }
 }
 
-export async function fetchPosts(): Promise<Post[]> {
+export async function fetchPosts(
+  userType: "student" | "community" = "community",
+  viewerId?: string | null
+): Promise<Post[]> {
   let response: Response
 
   try {
-    response = await fetch("/api/posts", {
+    const params = new URLSearchParams({ userType })
+
+    if (viewerId) {
+      params.set("viewerId", viewerId)
+    }
+
+    response = await fetch(`/api/posts?${params.toString()}`, {
       method: "GET",
       cache: "no-store",
     })
@@ -393,5 +402,101 @@ export async function analyzePost(postId: string): Promise<PostAnalysisResult> {
       generatedAtRaw !== undefined && generatedAtRaw !== null
         ? normaliseDate(generatedAtRaw)
         : undefined,
+  }
+}
+
+export async function analyzeCaptionAdhoc(
+  message: string
+): Promise<PostAnalysisResult> {
+  // Helper fallback when Bedrock isn't configured
+  const fallback = (): PostAnalysisResult => {
+    const rules: Array<{ key: RegExp; term: string; explanation: string }> = [
+      {
+        key: /u\s?-?district|udistrict|udist/gi,
+        term: "U‑District",
+        explanation:
+          "Short for Seattle's University District, the neighborhood around UW.",
+      },
+      {
+        key: /uw\b|university of washington/gi,
+        term: "UW",
+        explanation: "Abbreviation for the University of Washington.",
+      },
+      {
+        key: /snoqualmie\s?falls/gi,
+        term: "Snoqualmie Falls",
+        explanation: "A popular 268‑ft waterfall and hiking area east of Seattle.",
+      },
+      {
+        key: /carpool/gi,
+        term: "Carpool",
+        explanation: "Sharing a ride to split costs and reduce the number of cars.",
+      },
+      {
+        key: /hike|trail/gi,
+        term: "Hike",
+        explanation: "A recreational walk on a nature trail or mountain path.",
+      },
+    ]
+
+    const hits = rules
+      .filter((r) => r.key.test(message))
+      .map(({ term, explanation }) => ({ term, explanation }))
+
+    const terms = hits.length
+      ? hits
+      : [
+          {
+            term: "General update",
+            explanation:
+              "Casual post about local plans; no unusual slang detected.",
+          },
+        ]
+
+    return { terms, rawModelText: JSON.stringify({ terms }) }
+  }
+
+  let response: Response
+
+  try {
+    response = await fetch("/api/analysis", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    })
+  } catch (error) {
+    // Network issue: use fallback
+    return fallback()
+  }
+
+  let payload: unknown
+
+  try {
+    payload = await response.json()
+  } catch (error) {
+    return fallback()
+  }
+
+  if (!response.ok) {
+    // If analysis backend isn't configured, gracefully degrade to client rules
+    return fallback()
+  }
+
+  // Accept either { analysis: { terms } } or { terms } shapes
+  let rawTerms: unknown = []
+  if (payload && typeof payload === "object") {
+    if ("analysis" in payload && payload.analysis && typeof (payload as any).analysis === "object") {
+      const nested = (payload as { analysis: { terms?: unknown } }).analysis
+      rawTerms = nested?.terms ?? []
+    } else if ("terms" in payload) {
+      rawTerms = (payload as { terms: unknown }).terms
+    }
+  }
+
+  const terms = normaliseAnalysisTerms(rawTerms) ?? []
+
+  return {
+    terms,
+    rawModelText: JSON.stringify(rawTerms),
   }
 }

@@ -19,8 +19,172 @@ type StudentPostRecord = {
 
 const POSTS_TABLE = "student_posts";
 const PROFILES_TABLE = "profiles";
+const COMMUNITIES_TABLE = "communities";
 
-export async function GET() {
+type ProfileLookup = {
+  community_id?: string | null;
+};
+
+type CommunityRecord = {
+  id: string | null;
+  member_user_ids: string[] | null;
+};
+
+function sanitiseUserType(value: string | null): "student" | "community" {
+  const normalised = value?.toLowerCase();
+  return normalised === "student" ? "student" : "community";
+}
+
+function sanitiseString(value: string | null): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function extractAuthorId(author: Record<string, unknown>): string | null {
+  const raw = author["id"];
+  return typeof raw === "string" ? raw : null;
+}
+
+function extractAuthorUserType(author: Record<string, unknown>): string | null {
+  const raw = author["user_type"];
+
+  if (typeof raw !== "string") {
+    return null;
+  }
+
+  return raw.toLowerCase();
+}
+
+function extractAuthorCommunityId(
+  author: Record<string, unknown>
+): string | null {
+  const raw = author["community_id"];
+  return typeof raw === "string" ? raw : null;
+}
+
+function appendMemberIds(target: Set<string>, members: unknown): void {
+  if (!Array.isArray(members)) {
+    return;
+  }
+
+  for (const value of members) {
+    if (typeof value === "string" && value.trim()) {
+      target.add(value);
+    }
+  }
+}
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const requestedUserType = sanitiseUserType(url.searchParams.get("userType"));
+  const viewerId = sanitiseString(url.searchParams.get("viewerId"));
+
+  if (!viewerId) {
+    return NextResponse.json(
+      { error: "`viewerId` query parameter is required." },
+      { status: 400 }
+    );
+  }
+
+  const viewerCommunityIds = new Set<string>();
+  const allowedMemberIds = new Set<string>([viewerId]);
+
+  const {
+    data: viewerProfile,
+    error: profileError,
+  } = await supabaseAdmin
+    .from<ProfileLookup>(PROFILES_TABLE)
+    .select("community_id")
+    .eq("id", viewerId)
+    .maybeSingle();
+
+  if (profileError) {
+    return NextResponse.json(
+      {
+        error: "Failed to retrieve viewer profile",
+        details: profileError.message,
+      },
+      { status: 500 }
+    );
+  }
+
+  if (viewerProfile?.community_id) {
+    viewerCommunityIds.add(viewerProfile.community_id);
+  }
+
+  const {
+    data: membershipCommunities,
+    error: membershipError,
+  } = await supabaseAdmin
+    .from<CommunityRecord>(COMMUNITIES_TABLE)
+    .select("id, member_user_ids")
+    .contains("member_user_ids", [viewerId]);
+
+  if (membershipError) {
+    return NextResponse.json(
+      {
+        error: "Failed to retrieve viewer communities",
+        details: membershipError.message,
+      },
+      { status: 500 }
+    );
+  }
+
+  const membershipIds = new Set<string>();
+
+  for (const community of membershipCommunities ?? []) {
+    if (!community) {
+      continue;
+    }
+
+    if (typeof community.id === "string" && community.id) {
+      viewerCommunityIds.add(community.id);
+      membershipIds.add(community.id);
+    }
+
+    appendMemberIds(allowedMemberIds, community.member_user_ids ?? []);
+  }
+
+  const missingCommunityIds = Array.from(viewerCommunityIds).filter(
+    (id) => !membershipIds.has(id)
+  );
+
+  if (missingCommunityIds.length > 0) {
+    const {
+      data: directCommunities,
+      error: directError,
+    } = await supabaseAdmin
+      .from<CommunityRecord>(COMMUNITIES_TABLE)
+      .select("id, member_user_ids")
+      .in("id", missingCommunityIds);
+
+    if (directError) {
+      return NextResponse.json(
+        {
+          error: "Failed to retrieve viewer community members",
+          details: directError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    for (const community of directCommunities ?? []) {
+      if (!community) {
+        continue;
+      }
+
+      if (typeof community.id === "string" && community.id) {
+        viewerCommunityIds.add(community.id);
+      }
+
+      appendMemberIds(allowedMemberIds, community.member_user_ids ?? []);
+    }
+  }
+
   const { data: posts, error } = await supabaseAdmin
     .from<StudentPostRecord>(POSTS_TABLE)
     .select("*")
@@ -45,7 +209,7 @@ export async function GET() {
     )
   );
 
-  let authors: Record<string, unknown>[] = [];
+  let rawAuthors: Record<string, unknown>[] = [];
 
   if (authorIds.length > 0) {
     const { data, error: authorError } = await supabaseAdmin
@@ -63,11 +227,37 @@ export async function GET() {
       );
     }
 
-    authors = data ?? [];
+    rawAuthors = data ?? [];
   }
 
+  const matchingAuthors = rawAuthors.filter((author) => {
+    if (!author || typeof author !== "object") {
+      return false;
+    }
+
+    const authorId = extractAuthorId(author as Record<string, unknown>);
+    const authorCommunityId = extractAuthorCommunityId(
+      author as Record<string, unknown>
+    );
+    const belongsToCommunity =
+      (authorCommunityId && viewerCommunityIds.has(authorCommunityId)) ||
+      (authorId && allowedMemberIds.has(authorId));
+
+    if (!belongsToCommunity) {
+      return false;
+    }
+
+    const userType = extractAuthorUserType(author as Record<string, unknown>);
+
+    if (requestedUserType === "student") {
+      return userType === "student";
+    }
+
+    return userType !== "student";
+  });
+
   const authorById = new Map(
-    authors
+    matchingAuthors
       .map((author) => {
         const id = author && typeof author === "object" ? author["id"] : null;
         return typeof id === "string" ? ([id, author] as const) : null;
@@ -77,10 +267,39 @@ export async function GET() {
       )
   );
 
-  const postsWithAuthors = posts.map((post) => ({
-    ...post,
-    author: post.author_id ? authorById.get(post.author_id) ?? null : null,
-  }));
+  const postsWithAuthors = posts
+    .filter((post) => {
+      if (typeof post.author_id !== "string") {
+        return false;
+      }
+
+      const author = authorById.get(post.author_id);
+
+      if (!author) {
+        return false;
+      }
+
+      const authorCommunityId = extractAuthorCommunityId(author);
+      const belongsToCommunity =
+        (authorCommunityId && viewerCommunityIds.has(authorCommunityId)) ||
+        allowedMemberIds.has(post.author_id);
+
+      if (!belongsToCommunity) {
+        return false;
+      }
+
+      const userType = extractAuthorUserType(author);
+
+      if (requestedUserType === "student") {
+        return userType === "student";
+      }
+
+      return userType !== "student";
+    })
+    .map((post) => ({
+      ...post,
+      author: post.author_id ? authorById.get(post.author_id) ?? null : null,
+    }));
 
   return NextResponse.json({ posts: postsWithAuthors }, { status: 200 });
 }

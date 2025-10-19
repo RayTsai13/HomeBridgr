@@ -7,7 +7,7 @@ import { formatTimeAgo } from "@/lib/utils"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { PostTranslation } from "./post-translation"
 import { CaptionWithInsights } from "./caption-with-insights"
-import { analyzePost } from "@/lib/api/posts"
+import { analyzePost, analyzeCaptionAdhoc } from "@/lib/api/posts"
 
 interface PostCardProps {
   post: Post
@@ -23,25 +23,28 @@ export function PostCard({ post }: PostCardProps) {
     setAnalysisTerms(post.analysisTerms ?? null)
   }, [post.analysisTerms])
 
-  const canAnalyze = useMemo(() => {
-    return (
-      post.type === "user" &&
+  const isUuid = useMemo(
+    () =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         post.id
-      )
-    )
-  }, [post])
+      ),
+    [post.id]
+  )
+
+  const canAnalyze = post.type === "user"
 
   const runAnalysis = useCallback(async () => {
     try {
-      const result = await analyzePost(post.id)
+      const result = isUuid
+        ? await analyzePost(post.id)
+        : await analyzeCaptionAdhoc(post.content)
       if (result.terms.length) {
         setAnalysisTerms(result.terms)
       }
     } catch (error) {
       console.error("Caption analysis failed:", error)
     }
-  }, [post.id])
+  }, [isUuid, post.content, post.id])
 
   useEffect(() => {
     if (!analysisTerms && canAnalyze && !autoRequestedRef.current) {

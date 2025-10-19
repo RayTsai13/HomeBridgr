@@ -13,7 +13,6 @@ import { DiscoverFeed } from "@/components/discover-feed"
 import { MessagingView } from "@/components/messaging-view"
 import { ProfileView } from "@/components/profile-view"
 import { PostComposer } from "@/components/post-composer"
-import { PostCard } from "@/components/post-card"
 import { SuggestedFriendsSidebar } from "@/components/suggested-friends-sidebar"
 import { TopLocationsSidebar } from "@/components/top-locations-sidebar"
 import { TopStoriesSidebar } from "@/components/top-stories-sidebar"
@@ -201,63 +200,28 @@ export default function HomePage() {
           
           {/* Main Feed */}
           <div className={(currentView === "home" || currentView === "discover") ? "flex-1 max-w-4xl" : "flex-1 max-w-2xl mx-auto px-4"}>
-            {currentView === "home" && <HomeFeed refreshToken={feedRefreshToken} />}
+            {currentView === "home" && (
+              <HomeFeed
+                key="community-feed"
+                refreshToken={feedRefreshToken}
+                userType="community"
+                viewerId={sessionUser?.id ?? null}
+              />
+            )}
             {currentView === "discover" && <DiscoverFeed />}
             {currentView === "messages" && <MessagingView />}
             {currentView === "profile" && <ProfileView user={sessionUser} />}
-            {currentView === "student" && sessionUser && (
-              <div className="space-y-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
-                  <h2 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-2">Student Portal</h2>
-                  <p className="text-gray-600 dark:text-gray-300">Your academic journey and campus life</p>
-                </div>
-
-                <PostCard
-                  post={{
-                    id: "student-post-1",
-                    type: "user",
-                    author: {
-                      id: sessionUser.id,
-                      username: sessionUser.email?.split("@")[0] || "student",
-                      displayName: sessionUser.displayName || "Student",
-                      avatar: "/raymond.jpg",
-                      bio: "Student at HomeBridgr University",
-                      hometown: "Campus",
-                      location: "University Library"
-                    },
-                    content: "Just finished my research paper on cross-cultural communication! 📚 The library was packed but I found the perfect study spot. Coffee shops on campus are seriously overrated when you need to focus. #StudentLife #AcademicJourney",
-                    image: "/raymond_pic1.jpg",
-                    location: "University Library",
-                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-                    likes: 24,
-                    comments: 8,
-                    isLiked: false
-                  }}
-                />
-
-                <PostCard
-                  post={{
-                    id: "student-post-2",
-                    type: "user",
-                    author: {
-                      id: sessionUser.id,
-                      username: sessionUser.email?.split("@")[0] || "student",
-                      displayName: sessionUser.displayName || "Student",
-                      avatar: "/raymond.jpg",
-                      bio: "Student at HomeBridgr University",
-                      hometown: "Campus",
-                      location: "Campus Quad"
-                    },
-                    content: "Beautiful day on campus! 🌞 Took a break from studying to enjoy the sunshine. Sometimes you need to step away from the books and appreciate the moment. Meeting up with my study group later at the student center. Who else is enjoying this weather?",
-                    image: "/raymond_pic2.jpg",
-                    location: "Campus Quad",
-                    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-                    likes: 42,
-                    comments: 15,
-                    isLiked: true
-                  }}
-                />
-              </div>
+            {currentView === "student" && (
+              <HomeFeed
+                key="student-feed"
+                refreshToken={feedRefreshToken}
+                userType="student"
+                viewerId={sessionUser?.id ?? null}
+                title="Student Feed"
+                subtitle="Latest updates shared by students"
+                emptyTitle="No student posts yet"
+                emptyMessage="Encourage students to share what's happening on campus."
+              />
             )}
           </div>
           

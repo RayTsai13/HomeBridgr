@@ -4,15 +4,19 @@ HomeBridgr App Router
 ├─ app/login/page.tsx - Supabase Auth UI (email/magic-link) themed via ThemeSupa
 └─ app/home/page.tsx - authenticated shell with top nav, bottom nav, and view state
    ├─ Home view
-   │  ├─ <HomeFeed refreshToken>
-   │  │  ├─ fetchPosts()/createPost from lib/api/posts.ts hitting /api/posts
-   │  │  ├─ Auto-fallback to lib/mock-data.mockPosts when network/API fails
+   │  ├─ <HomeFeed refreshToken userType="community">
+   │  │  ├─ fetchPosts()/createPost from lib/api/posts.ts hitting `/api/posts?userType=community&viewerId=<session>`
+   │  │  ├─ Auto-fallback to lib/mock-data.mockPosts when community feed is empty/offline
    │  │  └─ <PostCard>
    │  │     ├─ <PostTranslation> -> useTranslatedText -> /api/translate
    │  │     ├─ analyzePost() -> /api/posts/analyze -> <CaptionWithInsights>
    │  │     └─ Heart/Comment actions handled locally
    │  ├─ <SuggestedFriendsSidebar> (mockUsers)
    │  └─ <TopStoriesSidebar> (mock stories + PostTranslation)
+   ├─ Student view
+   │  └─ <HomeFeed refreshToken userType="student">
+   │     ├─ fetchPosts() -> `/api/posts?userType=student&viewerId=<session>`
+   │     └─ No mock fallback; shows empty state when no student posts exist
    ├─ Discover view - <DiscoverFeed> (mockLocalPosts) + <TopLocationsSidebar>
    ├─ Messages view - <MessagingView> (mockConversations + formatTimeAgo)
    ├─ Profile view - <ProfileView> displaying SessionUser metadata
