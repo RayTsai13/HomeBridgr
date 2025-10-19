@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useState } from "react"
 import { MapPin, Users } from "lucide-react"
+import { PostTranslation } from "./post-translation"
 
 interface Location {
   id: string
@@ -93,8 +94,12 @@ export function TopLocationsSidebar() {
                 sizes="(max-width: 768px) 100vw, 320px"
               />
               <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg">
-                <p className="text-white text-xs font-semibold">{location.name}</p>
-                <p className="text-white/80 text-[10px]">{location.city}, {location.country}</p>
+                <p className="text-white text-xs font-semibold">
+                  <PostTranslation text={location.name} componentType="top-locations" />
+                </p>
+                <p className="text-white/80 text-[10px]">
+                  <PostTranslation text={`${location.city}, ${location.country}`} componentType="top-locations" />
+                </p>
               </div>
             </div>
             

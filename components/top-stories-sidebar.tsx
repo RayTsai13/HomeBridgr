@@ -3,6 +3,7 @@
 import Image from "next/image"
 import { useState } from "react"
 import { TrendingUp, Eye, Clock } from "lucide-react"
+import { PostTranslation } from "./post-translation"
 
 interface Story {
   id: string
@@ -104,7 +105,7 @@ export function TopStoriesSidebar() {
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
                 <span className="text-purple-300 text-[10px] font-semibold">{story.category}</span>
                 <h3 className="text-white text-sm font-semibold line-clamp-2 mt-1">
-                  {story.title}
+                  <PostTranslation text={story.title} componentType="top-stories" />
                 </h3>
               </div>
             </div>
