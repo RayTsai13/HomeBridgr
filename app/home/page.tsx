@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser"
 import { useTranslation } from "@/lib/translation-context"
+import type { SupportedLanguage } from "@/lib/translation"
 import { HomeFeed } from "@/components/home-feed"
 import { DiscoverFeed } from "@/components/discover-feed"
 import { MessagingView } from "@/components/messaging-view"
@@ -25,6 +26,7 @@ export default function HomePage() {
   const [showComposer, setShowComposer] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -41,6 +43,7 @@ export default function HomePage() {
 
       if (isMounted) {
         setAuthChecked(true)
+        setUserEmail(session.user.email ?? null)
       }
     }
 
@@ -51,8 +54,10 @@ export default function HomePage() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         router.replace("/login")
+        setUserEmail(null)
       } else {
         setAuthChecked(true)
+        setUserEmail(session.user.email ?? null)
       }
     })
 
@@ -64,6 +69,7 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    setUserEmail(null)
     router.replace("/login")
   }
 
@@ -90,11 +96,16 @@ export default function HomePage() {
           </h1>
           
           <div className="flex items-center gap-4">
+            {userEmail && (
+              <span className="hidden md:inline text-sm text-gray-600 dark:text-gray-300">
+                Signed in as {userEmail}
+              </span>
+            )}
             {/* Language Selector */}
             <div className="relative">
               <select
                 value={currentLanguage}
-                onChange={(e) => setLanguage(e.target.value as any)}
+                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
                 disabled={isTranslating}
                 className="appearance-none bg-purple-50 dark:bg-gray-700 text-purple-700 dark:text-purple-300 px-3 py-2 pr-8 rounded-lg text-sm font-medium border border-purple-200 dark:border-gray-600 hover:bg-purple-100 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
