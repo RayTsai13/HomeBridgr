@@ -1,31 +1,35 @@
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Next.js API Routes                          │
-├─────────────────────────────┬───────────────────────────────────────┤
-│ /api/posts/create           │ Creates student_post, uploads image   │
-│ /api/posts/analyze          │ Fetches post → calls Bedrock → saves  │
-│ /api/community/create       │ Create community + membership         │
-│ /api/community/post         │ Add community_post (link/text/image)  │
-│ /api/collections/create     │ Make postcard collection              │
-│ /api/postcards/generate     │ Query posts → render HTML→PNG/PDF     │
-│ /api/postcards/share-link   │ Create public read-only link          │
-└─────────────────────────────┴───────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ Next.js API Routes                                        │
+├─────────────────────┬─────────────────────────────────────┤
+│ Feed & Caption      │ /api/posts            GET, POST -> student_posts |
+│ workflow            │ /api/posts/analyze    POST      -> Bedrock + persist |
+│                     │ /api/analysis         POST      -> ad-hoc caption AI |
+├─────────────────────┼─────────────────────────────────────┤
+│ Community           │ /api/community/create POST      -> communities + owner |
+│                     │ /api/community/post   POST      -> community_posts     |
+├─────────────────────┼─────────────────────────────────────┤
+│ Collections         │ /api/collections      GET, POST -> postcard_collections |
+├─────────────────────┼─────────────────────────────────────┤
+│ AI Utilities        │ /api/bedrock          POST      -> invokeBedrockModel  |
+│                     │ /api/translate        POST      -> Google Gemini       |
+└─────────────────────┴─────────────────────────────────────┘
 
-┌─────────────────────────┐     ┌───────────────────────────┐
-│ Supabase (Postgres +    │     │ Supabase Storage          │
-│ RLS policies)           │     │ - /student_uploads        │
-│ - profiles              │     │ - /community_uploads      │
-│ - student_posts         │     │ - /postcards              │
-│ - community_posts       │     └───────────────────────────┘
-│ - communities           │
-│ - community_members     │     ┌───────────────────────────┐
-│ - postcard_collections  │     │ AWS Bedrock Runtime       │
-│ - postcards             │     │ - Claude/Llama via SDK    │
-│ - follows               │     │ - JSON in/out             │
-└──────────┬──────────────┘     └───────────┬───────────────┘
-           │                                  │
-           v                                  v
-   ┌──────────────┐                    ┌───────────────┐
-   │ Supabase Auth│                    │ Puppeteer Core│
-   │ - Email OTP  │                    │ - SSR postcard│
-   └──────────────┘                    │ - upload URLs │
-                                       └───────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ Supabase data touched                                     │
+├──────────────────────────────┬────────────────────────────┤
+│ Tables                       │ Buckets                    │
+├──────────────────────────────┼────────────────────────────┤
+│ profiles                     │ student_uploads            │
+│ student_posts (analysis_* columns) │                       │
+│ communities                  │                            │
+│ community_members            │                            │
+│ community_posts              │                            │
+│ postcard_collections         │                            │
+└──────────────────────────────┴────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────┐
+│ External dependencies                                     │
+├──────────────────────┬────────────────────────────────────┤
+│ AWS Bedrock          │ lib/bedrock.ts + lib/analysis.ts   │
+│ Google Generative AI │ app/api/translate (Gemini 2.0 Flash)│
+└──────────────────────┴────────────────────────────────────┘
