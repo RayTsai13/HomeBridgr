@@ -144,11 +144,12 @@ export default function LoginPage() {
     }
   }, [handleSession, supabase])
 
+/* -----------------------------------login page design*/
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-purple-50 to-slate-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-sky-200 to-purple-300 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-sky-600 bg-clip-text text-transparent">
             HomeBridgr
           </h1>
           <p className="mt-2 text-sm text-gray-600">
@@ -163,8 +164,8 @@ export default function LoginPage() {
               variables: {
                 default: {
                   colors: {
-                    brand: "#6b21a8",
-                    brandAccent: "#7c3aed",
+                    brand: "#c37fd3ff",
+                    brandAccent: "#bb47bfff",
                   },
                 },
               },

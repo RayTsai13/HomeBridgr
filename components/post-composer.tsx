@@ -246,26 +246,26 @@ export function PostComposer({ onClose, onPostCreated, author }: PostComposerPro
           />
           <button
             onClick={handleImageSelect}
-            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-lime-100 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-sky-100 transition-colors"
             disabled={isSubmitting}
           >
-            <ImageIcon className="w-5 h-5 text-lime-500" />
+            <ImageIcon className="w-5 h-5 text-sky-500" />
             <span className="text-sm font-medium text-gray-700">
               {selectedFile ? "Change Photo" : "Photo"}
             </span>
           </button>
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-lime-100 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-sky-100 transition-colors"
             disabled
           >
-            <Smile className="w-5 h-5 text-lime-500" />
+            <Smile className="w-5 h-5 text-sky-500" />
             <span className="text-sm font-medium text-gray-700">Emoji</span>
           </button>
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-lime-100 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-sky-100 transition-colors"
             disabled
           >
-            <MapPin className="w-5 h-5 text-lime-500" />
+            <MapPin className="w-5 h-5 text-sky-500" />
             <span className="text-sm font-medium text-gray-700">Location</span>
           </button>
         </div>

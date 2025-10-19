@@ -26,7 +26,7 @@ export function MessagingView() {
         <div className="flex items-center gap-3 p-4 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-violet-50">
           <button
             onClick={() => setSelectedConversation(null)}
-            className="text-lime-300 hover:text-lime-700 font-medium"
+            className="text-sky-300 hover:text-sky-700 font-medium"
           >
             ← Back
           </button>
@@ -121,7 +121,7 @@ export function MessagingView() {
                   className="w-14 h-14 rounded-full object-cover"
                 />
                 {conversation.unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-6 h-6 bg-lime-300 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-6 h-6 bg-sky-300 text-white text-xs font-bold rounded-full flex items-center justify-center">
                     {conversation.unreadCount}
                   </span>
                 )}
