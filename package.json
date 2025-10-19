@@ -22,6 +22,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.913.0",
     "@supabase/supabase-js": "^2.75.1",
     "next": "^14.0.0",
     "react": "^18.0.0",
