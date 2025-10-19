@@ -121,9 +121,9 @@ export default function HomePage() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-purple-300 via-sky-200 to-purple-300 dark:from-purple-900 dark:via-cyan-800 dark:to-purple-900">
       {/* Top Navigation */}
-      <nav className="bg-purple-400 dark:bg-gray-800/80 backdrop-blur-md border-b border-purple-100 dark:border-gray-700 sticky top-0 z-50 px-4 py-3">
+      <nav className="bg-violet-400 dark:bg-violet-800/80 backdrop-blur-md border-b border-violet-100 dark:border-violet-700 sticky top-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-100 to-purple-300 dark:from-purple-400 dark:to-violet-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-100 to-violet-300 dark:from-violet-400 dark:to-violet-400 bg-clip-text text-transparent">
             HomeBridgr
           </h1>
           
@@ -154,8 +154,8 @@ export default function HomePage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border relative",
                 currentView === "messages"
-                  ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700"
-                  : "bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 text-purple-400 dark:text-purple-300 border-purple-200 dark:border-gray-600"
+                  ? "bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700"
+                  : "bg-sky-50 dark:bg-gray-700 hover:bg-sky-100 dark:hover:bg-gray-600 text-sky-400 dark:text-sky-300 border-sky-200 dark:border-gray-600"
               )}
             >
               <MessageCircle className="w-4 h-4" />
@@ -179,7 +179,7 @@ export default function HomePage() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-600 dark:text-sky-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-sky-200 dark:border-sky-800"
+              className="flex items-center gap-2 bg-sky-50 dark:bg-sky-600/30 hover:bg-sky-100 dark:hover:bg-sky-600/50 text-sky-400 dark:text-sky-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-sky-200 dark:border-sky-800"
             >
               <LogOut className="w-4 h-4" />
               Logout
