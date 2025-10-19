@@ -4,7 +4,7 @@ export const currentUser: User = {
   id: "1",
   username: "test_user",
   displayName: "Raymond Tsai",
-  avatar: "/Raymond.jpg",
+  avatar: "/raymond.jpg",
   bio: "UW Freshman",
   hometown: "Taoyuan, Taiwan",
   location: "Seattle, WA",
