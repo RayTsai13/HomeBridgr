@@ -29,8 +29,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       return text
     }
 
-    // Only translate substantial content
-    if (text.length < 10 || text.includes('@') || text.includes('http')) {
+    // Only translate substantial content (allow shorter phrases)
+    if (text.length < 4 || text.includes('@') || text.includes('http')) {
       return text
     }
 

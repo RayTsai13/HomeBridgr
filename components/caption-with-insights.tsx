@@ -1,6 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslation } from "@/lib/translation-context"
+import { PostTranslation } from "./post-translation"
 
 type InsightTerm = {
   term: string
@@ -83,6 +85,18 @@ function buildSegments(text: string, terms: InsightTerm[]): Segment[] {
 }
 
 export function CaptionWithInsights({ text, terms }: CaptionWithInsightsProps) {
+  const { currentLanguage } = useTranslation()
+
+  // If not English, prefer a full translation to ensure readability.
+  // Highlighting relies on English terms and won't align post-translation.
+  if (currentLanguage !== 'en') {
+    return (
+      <p className="leading-relaxed text-gray-800 dark:text-gray-200 text-lg">
+        <PostTranslation text={text} componentType="post-card" />
+      </p>
+    )
+  }
+
   const segments = useMemo(() => buildSegments(text, terms), [text, terms])
 
   return (
