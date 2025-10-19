@@ -10,6 +10,11 @@ type ApiPostRecord = {
   [key: string]: unknown
 }
 
+type ApiTermRecord = {
+  term?: unknown
+  explanation?: unknown
+}
+
 function toOptionalString(value: unknown): string | undefined {
   if (typeof value === "string") {
     const trimmed = value.trim()
@@ -55,6 +60,48 @@ function normaliseDate(value: unknown): Date {
   }
 
   return new Date()
+}
+
+function normaliseAnalysisTerms(value: unknown): { term: string; explanation: string }[] | undefined {
+  if (!value) {
+    return undefined
+  }
+
+  let parsed: unknown
+
+  if (typeof value === "string") {
+    try {
+      parsed = JSON.parse(value)
+    } catch {
+      return undefined
+    }
+  } else {
+    parsed = value
+  }
+
+  if (!Array.isArray(parsed)) {
+    return undefined
+  }
+
+  const terms = parsed
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null
+      }
+      const { term, explanation } = entry as ApiTermRecord
+      const cleanTerm = toOptionalString(term)
+      const cleanExplanation = toOptionalString(explanation)
+      if (!cleanTerm || !cleanExplanation) {
+        return null
+      }
+      return { term: cleanTerm, explanation: cleanExplanation }
+    })
+    .filter(
+      (entry): entry is { term: string; explanation: string } =>
+        Boolean(entry)
+    )
+
+  return terms.length ? terms : undefined
 }
 
 function normaliseAuthor(
@@ -135,6 +182,19 @@ function mapApiPost(record: ApiPostRecord): Post | null {
   const content =
     caption || (image ? "Shared a photo." : "Shared an update.")
 
+  const analysisTerms = normaliseAnalysisTerms(
+    (record as Record<string, unknown>).analysis_terms
+  )
+  const analysisRawText = toOptionalString(
+    (record as Record<string, unknown>).analysis_raw_text
+  )
+  const analysisGeneratedRaw = (record as Record<string, unknown>)
+    .analysis_generated_at
+  const analysisGeneratedAt =
+    analysisGeneratedRaw !== undefined && analysisGeneratedRaw !== null
+      ? normaliseDate(analysisGeneratedRaw)
+      : undefined
+
   return {
     id,
     type: "user",
@@ -146,6 +206,9 @@ function mapApiPost(record: ApiPostRecord): Post | null {
     likes,
     comments,
     isLiked: false,
+    analysisTerms,
+    analysisRawText: analysisRawText ?? undefined,
+    analysisGeneratedAt,
   }
 }
 
@@ -192,4 +255,143 @@ export async function fetchPosts(): Promise<Post[]> {
   return postsArray
     .map(mapApiPost)
     .filter((post): post is Post => Boolean(post))
+}
+
+type CreatePostInput = {
+  caption: string
+  authorId: string
+  imageUrl?: string | null
+}
+
+export async function createPost({
+  caption,
+  authorId,
+  imageUrl,
+}: CreatePostInput): Promise<Post> {
+  let response: Response
+
+  try {
+    response = await fetch("/api/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        caption,
+        author_id: authorId,
+        image_url: imageUrl ?? null,
+      }),
+    })
+  } catch (error) {
+    throw new Error("Network error while creating the post.")
+  }
+
+  let payload: unknown
+
+  try {
+    payload = await response.json()
+  } catch (error) {
+    throw new Error("Failed to parse create post response.")
+  }
+
+  if (!response.ok) {
+    const message =
+      (payload &&
+        typeof payload === "object" &&
+        "error" in payload &&
+        typeof (payload as { error: unknown }).error === "string"
+        ? (payload as { error: string }).error
+        : null) ?? "Unable to create post."
+
+    throw new Error(message)
+  }
+
+  const record =
+    payload &&
+    typeof payload === "object" &&
+    "post" in payload
+      ? ((payload as { post: ApiPostRecord }).post as ApiPostRecord)
+      : null
+
+  const mapped = record ? mapApiPost(record) : null
+
+  if (!mapped) {
+    throw new Error("Unexpected response while creating post.")
+  }
+
+  return mapped
+}
+
+export type PostAnalysisResult = {
+  terms: { term: string; explanation: string }[]
+  rawModelText: string
+  generatedAt?: Date
+}
+
+export async function analyzePost(postId: string): Promise<PostAnalysisResult> {
+  let response: Response
+
+  try {
+    response = await fetch("/api/posts/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ postId }),
+    })
+  } catch (error) {
+    throw new Error("Network error while running caption analysis.")
+  }
+
+  let payload: unknown
+
+  try {
+    payload = await response.json()
+  } catch (error) {
+    throw new Error("Failed to parse caption analysis response.")
+  }
+
+  if (!response.ok) {
+    const message =
+      (payload &&
+        typeof payload === "object" &&
+        "error" in payload &&
+        typeof (payload as { error: unknown }).error === "string"
+        ? (payload as { error: string }).error
+        : null) ?? "Unable to analyze caption."
+
+    throw new Error(message)
+  }
+
+  const analysisPayload =
+    payload && typeof payload === "object" && "analysis" in payload
+      ? ((payload as { analysis: unknown }).analysis as Record<string, unknown>)
+      : {}
+
+  const postRecord =
+    payload && typeof payload === "object" && "post" in payload
+      ? ((payload as { post: ApiPostRecord }).post as ApiPostRecord)
+      : {}
+
+  const rawTerms =
+    analysisPayload?.terms ?? (postRecord as Record<string, unknown>).analysis_terms
+  const rawText =
+    toOptionalString(analysisPayload?.rawModelText) ??
+    toOptionalString((postRecord as Record<string, unknown>).analysis_raw_text) ??
+    ""
+  const generatedAtRaw = (postRecord as Record<string, unknown>)
+    .analysis_generated_at
+
+  const terms =
+    normaliseAnalysisTerms(rawTerms) ??
+    []
+
+  return {
+    terms,
+    rawModelText: rawText,
+    generatedAt:
+      generatedAtRaw !== undefined && generatedAtRaw !== null
+        ? normaliseDate(generatedAtRaw)
+        : undefined,
+  }
 }

@@ -13,7 +13,7 @@ vi.mock("@/lib/supabase_admin", () => ({
   },
 }));
 
-import { POST } from "@/app/api/collections/route";
+import { GET, POST } from "@/app/api/collections/route";
 
 type SupabaseResponse<T> = {
   data: T;
@@ -38,11 +38,27 @@ function mockInsert<T>(
   return { insert, select, single };
 }
 
+function mockSelect<T>(response: SupabaseResponse<T>) {
+  const order = vi.fn().mockResolvedValue(response);
+  const eq = vi.fn().mockReturnValue({ order });
+  const select = vi.fn().mockReturnValue({ eq });
+
+  fromMock.mockImplementationOnce(() => ({ select }));
+
+  return { select, eq, order };
+}
+
 function jsonRequest(body: unknown) {
   return new Request("http://localhost/api/collections", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+  });
+}
+
+function getRequest(query: string) {
+  return new Request(`http://localhost/api/collections${query}`, {
+    method: "GET",
   });
 }
 
@@ -114,5 +130,50 @@ describe("app/api/collections/route", () => {
 
     expect(response.status).toBe(500);
     expect(body.error).toMatch(/Failed to create collection/i);
+  });
+
+  it("retrieves collections for a user", async () => {
+    mockSelect({
+      data: [
+        {
+          id: "collection-1",
+          name: "Family Memories",
+          created_by: "user-1",
+        },
+      ],
+      error: null,
+    });
+
+    const response = await GET(getRequest("?userId=user-1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.collections).toHaveLength(1);
+    expect(body.collections[0]).toMatchObject({
+      id: "collection-1",
+      name: "Family Memories",
+    });
+  });
+
+  it("validates userId is provided for GET", async () => {
+    const response = await GET(getRequest(""));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error).toMatch(/`userId`/i);
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
+  it("handles Supabase errors when fetching collections", async () => {
+    mockSelect({
+      data: null,
+      error: { message: "select failed" },
+    });
+
+    const response = await GET(getRequest("?userId=user-1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body.error).toMatch(/Failed to fetch collections/i);
   });
 });

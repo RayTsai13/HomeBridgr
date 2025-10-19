@@ -1,19 +1,21 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Loader2 } from "lucide-react"
+import { AlertTriangle, Loader2 } from "lucide-react"
 import { PostCard } from "./post-card"
 import type { Post } from "@/lib/types"
 import { fetchPosts } from "@/lib/api/posts"
+import { mockPosts } from "@/lib/mock-data"
 
 interface HomeFeedProps {
   refreshToken?: number
 }
 
 export function HomeFeed({ refreshToken = 0 }: HomeFeedProps) {
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<Post[]>(mockPosts)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [fallbackMessage, setFallbackMessage] = useState<string | null>(null)
+  const [isFallback, setIsFallback] = useState(false)
 
   const mountedRef = useRef(false)
 
@@ -21,17 +23,26 @@ export function HomeFeed({ refreshToken = 0 }: HomeFeedProps) {
     if (!mountedRef.current) return
 
     setIsLoading(true)
-    setError(null)
+    setFallbackMessage(null)
+    setIsFallback(false)
 
     try {
       const data = await fetchPosts()
       if (!mountedRef.current) return
-      setPosts(data)
+
+      const usingFallback = data.length === 0
+      setPosts(usingFallback ? mockPosts : data)
+      setIsFallback(usingFallback)
+      if (usingFallback) {
+        setFallbackMessage("No live updates yet, so we're showing your sample feed.")
+      }
     } catch (err) {
       console.error("Failed to load posts:", err)
       if (!mountedRef.current) return
-      setPosts([])
-      setError("Unable to load posts right now. Please try again.")
+
+      setPosts(mockPosts)
+      setIsFallback(true)
+      setFallbackMessage("We couldn't reach the live feed. You're seeing sample posts instead.")
     } finally {
       if (mountedRef.current) {
         setIsLoading(false)
@@ -54,6 +65,8 @@ export function HomeFeed({ refreshToken = 0 }: HomeFeedProps) {
 
   const handleRetry = () => {
     if (!mountedRef.current) return
+    setFallbackMessage(null)
+    setIsFallback(false)
     void loadPosts()
   }
 
@@ -67,16 +80,19 @@ export function HomeFeed({ refreshToken = 0 }: HomeFeedProps) {
         </p>
       </div>
 
-      {error && (
-        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <p className="font-semibold">We couldn&apos;t load the feed.</p>
-          <p className="mt-1 text-red-600">{error}</p>
-          <button
-            onClick={handleRetry}
-            className="mt-3 inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100"
-          >
-            Try again
-          </button>
+      {fallbackMessage && (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold">Showing sample posts</p>
+            <p className="mt-1 text-yellow-600">{fallbackMessage}</p>
+            <button
+              onClick={handleRetry}
+              className="mt-3 inline-flex items-center rounded-lg border border-yellow-300 bg-white px-3 py-1.5 text-xs font-semibold text-yellow-700 transition-colors hover:bg-yellow-100"
+            >
+              Try again
+            </button>
+          </div>
         </div>
       )}
 
@@ -87,7 +103,7 @@ export function HomeFeed({ refreshToken = 0 }: HomeFeedProps) {
         </div>
       )}
 
-      {!isLoading && !error && posts.length === 0 && (
+      {!isLoading && !isFallback && posts.length === 0 && (
         <div className="rounded-3xl border border-dashed border-purple-200 bg-white/60 px-6 py-10 text-center text-gray-500">
           <h2 className="text-lg font-semibold text-gray-700">No posts yet</h2>
           <p className="mt-2 text-sm">
