@@ -1,11 +1,22 @@
 "use client"
 
 import Image from "next/image"
-import { Heart, MessageCircle, Share2, MapPin, ExternalLink } from "lucide-react"
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  MapPin,
+  ExternalLink,
+  Sparkles,
+  Loader2,
+  AlertCircle,
+} from "lucide-react"
 import type { Post } from "@/lib/types"
 import { formatTimeAgo } from "@/lib/utils"
-import { useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { PostTranslation } from "./post-translation"
+import { analyzePost } from "@/lib/api/posts"
+import { CaptionWithInsights } from "./caption-with-insights"
 
 interface PostCardProps {
   post: Post
@@ -14,6 +25,64 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false)
   const [likes, setLikes] = useState(post.likes)
+  const [analysisTerms, setAnalysisTerms] = useState(post.analysisTerms ?? null)
+  const [analysisGeneratedAt, setAnalysisGeneratedAt] = useState<Date | undefined>(
+    post.analysisGeneratedAt
+  )
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const autoRequestedRef = useRef(false)
+
+  useEffect(() => {
+    setAnalysisTerms(post.analysisTerms ?? null)
+    setAnalysisGeneratedAt(post.analysisGeneratedAt)
+  }, [post.analysisTerms, post.analysisGeneratedAt])
+
+  const canAnalyze = useMemo(() => {
+    return (
+      post.type === "user" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        post.id
+      )
+    )
+  }, [post])
+
+  const handleAnalyze = useCallback(async () => {
+    if (!canAnalyze) {
+      setAnalysisError("This caption can only be explained for live posts.")
+      return
+    }
+
+    setAnalysisLoading(true)
+    setAnalysisError(null)
+
+    try {
+      const result = await analyzePost(post.id)
+      setAnalysisTerms(result.terms)
+      setAnalysisGeneratedAt(result.generatedAt)
+    } catch (error) {
+      console.error("Caption analysis failed:", error)
+      setAnalysisError(
+        error instanceof Error
+          ? error.message
+          : "Unable to explain this caption right now."
+      )
+    } finally {
+      setAnalysisLoading(false)
+    }
+  }, [canAnalyze, post.id])
+
+  useEffect(() => {
+    if (
+      canAnalyze &&
+      !analysisTerms &&
+      !analysisLoading &&
+      !autoRequestedRef.current
+    ) {
+      autoRequestedRef.current = true
+      void handleAnalyze()
+    }
+  }, [canAnalyze, analysisTerms, analysisLoading, handleAnalyze])
 
   const handleLike = () => {
     setIsLiked(!isLiked)
@@ -131,9 +200,78 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Content */}
       <div className="px-4 pb-3">
-        <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
-          <PostTranslation text={post.content} componentType="post-card" />
-        </p>
+        {analysisTerms && analysisTerms.length > 0 ? (
+          <CaptionWithInsights text={post.content} terms={analysisTerms} />
+        ) : (
+          <p className="leading-relaxed text-gray-800 dark:text-gray-200">
+            <PostTranslation text={post.content} componentType="post-card" />
+          </p>
+        )}
+      </div>
+
+      {/* Caption Analysis */}
+      <div className="px-4 pb-3">
+        <div className="rounded-2xl border border-purple-100 bg-purple-50/60 dark:border-gray-700 dark:bg-gray-900/40 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold text-purple-700 dark:text-purple-300">
+              <Sparkles className="h-4 w-4" />
+              Caption clarifier
+            </div>
+            {analysisGeneratedAt && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Updated {formatTimeAgo(analysisGeneratedAt)}
+              </span>
+            )}
+          </div>
+
+          {analysisTerms && analysisTerms.length > 0 ? (
+            <div className="mt-3 space-y-3 text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Hover the highlighted phrases above to see what they mean.
+              </p>
+              <button
+                onClick={handleAnalyze}
+                disabled={analysisLoading}
+                className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white px-3 py-1.5 text-xs font-semibold text-purple-600 transition-colors hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-800 dark:text-purple-300 dark:hover:bg-gray-700"
+              >
+                {analysisLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Run again
+              </button>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <button
+                onClick={handleAnalyze}
+                disabled={analysisLoading || !canAnalyze}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2 text-xs font-semibold text-white transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {analysisLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Explaining…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Explain this caption
+                  </>
+                )}
+              </button>
+              {!canAnalyze && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Save this post to Supabase to run the caption clarifier.
+                </p>
+              )}
+            </div>
+          )}
+
+          {analysisError && (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-200">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{analysisError}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Image */}
