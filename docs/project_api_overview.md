@@ -46,6 +46,7 @@ Shared providers and hooks live under `lib/` and `hooks/`, including the transla
 | `/api/community/create`<br/>`app/api/community/create/route.ts` | `POST` | Creates a community row and immediately inserts an owner membership in `community_members`; rolls back the community if the membership insert fails. | `lib/supabase_admin.ts` |
 | `/api/community/post`<br/>`app/api/community/post/route.ts` | `POST` | Creates community posts (`community_posts`), requiring `communityId`, `authorId`, and at least one of `text`, `linkUrl`, or `imageUrl`. Infers `content_type` when absent. | `lib/supabase_admin.ts` |
 | `/api/collections`<br/>`app/api/collections/route.ts` | `GET`, `POST` | `GET` expects `?userId`, returning that user's `postcard_collections`; `POST` trims `name`, `userId`, and optional description/visibility before inserting. | `lib/supabase_admin.ts` |
+| `/api/profiles`<br/>`app/api/profiles/route.ts` | `GET`, `PATCH` | `GET` returns the profile (if any) for `?userId=` so the login flow can detect missing roles; `PATCH` persists the signup `userType` (`student` or `community`) via an upsert keyed on `id`. | `lib/supabase_admin.ts` |
 | `/api/bedrock`<br/>`app/api/bedrock/route.ts` | `POST` | Thin proxy around `invokeBedrockModel` that accepts prompt settings, resolves the model id, calls Bedrock, and returns the raw body. | `lib/bedrock.ts` |
 | `/api/translate`<br/>`app/api/translate/route.ts` | `POST` | Sends `{ text, targetLanguage }` to Google Gemini (2.0 Flash) using the official SDK and returns the translated text. | `@google/generative-ai`, `process.env.GEMINI_API_KEY` |
 
@@ -66,6 +67,7 @@ Shared providers and hooks live under `lib/` and `hooks/`, including the transla
 - `__tests__/app/api/community/create/route.test.ts` - ensures owner membership creation and rollback logic.
 - `__tests__/app/api/community/post/route.test.ts` - validates required fields, inferred content type, and Supabase errors.
 - `__tests__/app/api/collections/route.test.ts` - covers both GET and POST workflows.
+- `__tests__/app/api/profiles/route.test.ts` - verifies signup user type persistence and error handling.
 - `__tests__/lib/analysis.test.ts` - unit tests prompt construction and Bedrock response parsing.
 
 ## Database & Storage Expectations (Supabase)
