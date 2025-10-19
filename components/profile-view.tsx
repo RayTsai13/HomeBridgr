@@ -1,4 +1,4 @@
-// ...existing code...
+
 "use client"
 
 import Image from "next/image"
@@ -8,7 +8,6 @@ import { currentUser, mockPosts } from "@/lib/mock-data"
 export function ProfileView() {
   const userPosts = mockPosts.filter((post) => post.type === "user" && post.author.id === currentUser.id)
 
-  // ...existing code...
   const galleryImages = [
     "/raymond_pic1.jpg?height=300&width=300",
     "/raymond_pic2.jpg?height=300&width=300",
@@ -21,7 +20,7 @@ export function ProfileView() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Header with gradient background */}
-      <div className="gradient-purple-soft dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-700 rounded-3xl p-6 mb-6 relative overflow-hidden">
+      <div className="gradient-purple-soft dark:bg-gradient-to-br dark:from-cyan-900 dark:to-cyan-700 rounded-3xl p-6 mb-6 relative overflow-hidden">
         <div className="absolute top-4 right-4">
           <button className="w-10 h-10 rounded-full bg-white/80 dark:bg-gray-700/80 hover:bg-white dark:hover:bg-gray-600 flex items-center justify-center transition-colors">
             <Settings className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -38,7 +37,7 @@ export function ProfileView() {
             className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg mb-4"
           />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{currentUser.displayName}</h1>
-          <p className="text-purple-600 dark:text-purple-400 font-medium mb-3">@{currentUser.username}</p>
+          <p className="text-purple-400 dark:text-lime-300 font-medium mb-3">@{currentUser.username}</p>
           <p className="text-gray-700 dark:text-gray-300 mb-4 max-w-md">{currentUser.bio}</p>
 
           {/* Location Info */}
@@ -87,12 +86,12 @@ export function ProfileView() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-purple-100 dark:border-gray-700">
-        <button className="flex-1 py-3 text-purple-600 dark:text-purple-400 font-semibold border-b-2 border-purple-600 dark:border-purple-400">Posts</button>
-        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+      <div className="flex gap-2 mb-6 border-b border-purple-500 dark:border-gray-700">
+        <button className="flex-1 py-3 text-purple-500 dark:text-lime-300 font-semibold border-b-2 border-purple-300 dark:border-lime-300">Posts</button>
+        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-300 dark:hover:text-lime-300 transition-colors">
           Liked
         </button>
-        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-300 dark:hover:text-lime-300 transition-colors">
           Saved
         </button>
       </div>
@@ -105,7 +104,7 @@ export function ProfileView() {
             className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-200 to-violet-200"
           >
             <Image
-              src="/vibrant-community-connection.png"
+              src={src}
               alt={`Post ${idx}`}
               fill
               className="object-cover hover:scale-110 transition-transform duration-300"
@@ -133,12 +132,11 @@ export function ProfileView() {
               className="w-10 h-10 rounded-full border-2 border-white object-cover"
             />
           ))}
-          <button className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 bg-purple-100 dark:bg-gray-700 flex items-center justify-center text-purple-600 dark:text-purple-400 font-semibold text-sm hover:bg-purple-200 dark:hover:bg-gray-600 transition-colors">
-            +12
+          <button className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 bg-lime-300 dark:bg-gray-700 flex items-center justify-center text-lime-600 dark:text-lime-300 font-semibold text-sm hover:bg-lime-200 dark:hover:bg-gray-600 transition-colors">
+            +
           </button>
         </div>
       </div>
     </div>
   )
 }
-// ...existing code...

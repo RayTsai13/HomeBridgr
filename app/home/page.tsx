@@ -81,11 +81,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-fuchsia-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-purple-200 via-purple-300 to-purple-200 dark:from-purple-900 dark:via-cyan-800 dark:to-purple-900">
       {/* Top Navigation */}
-      <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-purple-100 dark:border-gray-700 sticky top-0 z-50 px-4 py-3">
+      <nav className="bg-purple-400 dark:bg-gray-800/80 backdrop-blur-md border-b border-purple-100 dark:border-gray-700 sticky top-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 dark:from-purple-400 dark:to-violet-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-100 to-purple-300 dark:from-purple-400 dark:to-violet-400 bg-clip-text text-transparent">
             HomeBridgr
           </h1>
           
@@ -191,7 +191,7 @@ export default function HomePage() {
 
           <button
             onClick={() => setShowComposer(true)}
-            className="flex items-center justify-center w-14 h-14 -mt-6 rounded-full bg-gradient-to-r from-purple-600 to-violet-600 shadow-lg hover:shadow-xl transition-all"
+            className="flex items-center justify-center w-14 h-14 -mt-6 rounded-full bg-gradient-to-r from-violet-500 to-violet-600 shadow-lg hover:shadow-xl transition-all"
           >
             <PlusCircle className="w-7 h-7 text-white" />
           </button>
