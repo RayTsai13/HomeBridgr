@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     data: post,
     error,
   } = await supabaseAdmin
-    .from<CommunityPostRecord>(COMMUNITY_POSTS_TABLE)
+    .from(COMMUNITY_POSTS_TABLE)
     .insert(insertPayload)
     .select("*")
     .single();

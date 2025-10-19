@@ -60,9 +60,9 @@ export function PostCard({ post }: PostCardProps) {
 
   if (post.type === "message-summary") {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden mb-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-visible mb-6 shadow-sm">
         {/* Image Collage Grid */}
-        <div className="relative h-80 grid grid-cols-2 gap-1 p-1">
+        <div className="relative h-[30rem] grid grid-cols-2 gap-1 p-1">
           {post.images?.slice(0, 4).map((image, index) => (
             <div
               key={index}
@@ -80,11 +80,11 @@ export function PostCard({ post }: PostCardProps) {
           
           {/* Central Message Overlay */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-3xl px-8 py-6 shadow-2xl max-w-xs text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-3xl px-10 py-8 shadow-2xl max-w-md text-center">
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
                 <PostTranslation text={post.content} componentType="post-card" />
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-base text-gray-500 dark:text-gray-400">
                 catch up with {post.participants?.[0]?.displayName}
               </p>
             </div>
@@ -93,8 +93,8 @@ export function PostCard({ post }: PostCardProps) {
 
         {/* Links Section */}
         {post.links && post.links.length > 0 && (
-          <div className="px-4 py-3 border-t border-purple-100 dark:border-gray-700">
-            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+          <div className="px-6 py-4 border-t border-purple-100 dark:border-gray-700">
+            <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1">
               <ExternalLink className="w-3 h-3" />
               Shared Links
             </h4>
@@ -105,11 +105,11 @@ export function PostCard({ post }: PostCardProps) {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 rounded-lg px-3 py-2 transition-colors"
+                  className="block bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 rounded-lg px-4 py-3 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-black dark:text-sky-300">{link.title}</span>
-                    <ExternalLink className="w-4 h-4 text-sky-300 dark:text-sky-300" />
+                    <span className="text-base font-medium text-black dark:text-sky-300">{link.title}</span>
+                    <ExternalLink className="w-5 h-5 text-sky-300 dark:text-sky-300" />
                   </div>
                 </a>
               ))}
@@ -118,22 +118,22 @@ export function PostCard({ post }: PostCardProps) {
         )}
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-purple-100 dark:border-gray-700 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-purple-100 dark:border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {post.participants?.[0] && (
               <Image
                 src={post.participants[0].avatar || "/placeholder.svg"}
                 alt={post.participants[0].displayName}
-                width={32}
-                height={32}
-                className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-700"
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-full border-2 border-white dark:border-gray-700"
               />
             )}
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-base font-medium text-gray-700 dark:text-gray-300">
               {post.participants?.[0]?.displayName}
             </span>
           </div>
-          <button className="text-sm font-medium text-black dark:text-purple-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">
+          <button className="text-base font-medium text-black dark:text-purple-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors">
             View Messages →
           </button>
         </div>
@@ -142,37 +142,37 @@ export function PostCard({ post }: PostCardProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden mb-4 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-visible mb-6 shadow-sm">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4">
+      <div className="flex items-center gap-4 p-6">
         <Image
           src={post.author.avatar || "/placeholder.svg"}
           alt={post.author.displayName}
-          width={48}
-          height={48}
-          className="w-12 h-12 rounded-full object-cover"
+          width={72}
+          height={72}
+          className="w-[4.5rem] h-[4.5rem] rounded-full object-cover"
         />
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 dark:text-white">{post.author.displayName}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400" suppressHydrationWarning>{formatTimeAgo(post.timestamp)}</p>
+          <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{post.author.displayName}</h3>
+          <p className="text-base text-gray-500 dark:text-gray-400" suppressHydrationWarning>{formatTimeAgo(post.timestamp)}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 px-4 py-2 rounded-full">
             <MapPin className="w-4 h-4" />
-            <span className="text-xs font-medium">{post.location}</span>
+            <span className="text-sm font-medium">{post.location}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 px-3 py-0.5">
-            <span className="text-xs">From: {post.author.hometown}</span>
+          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 px-4 py-1">
+            <span className="text-sm">From: {post.author.hometown}</span>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-3">
+      <div className="px-6 pb-4">
         {analysisTerms && analysisTerms.length > 0 ? (
           <CaptionWithInsights text={post.content} terms={analysisTerms} />
         ) : (
-          <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+          <p className="text-gray-800 dark:text-gray-200 leading-relaxed text-lg">
             <PostTranslation text={post.content} componentType="post-card" />
           </p>
         )}
@@ -180,33 +180,33 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Image */}
       {post.image && (
-        <div className="px-4 pb-3">
+        <div className="px-6 pb-4">
           <Image
             src={post.image || "/placeholder.svg"}
             alt="Post content"
             width={1200}
             height={900}
-            className="w-full h-auto rounded-2xl object-cover max-h-96"
+            className="w-full h-auto rounded-2xl object-cover max-h-[36rem]"
             sizes="100vw"
           />
         </div>
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-6 px-4 py-3 border-t border-purple-100 dark:border-gray-700">
+      <div className="flex items-center gap-8 px-6 py-4 border-t border-purple-100 dark:border-gray-700">
         <button
           onClick={handleLike}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
-          <Heart className={`w-6 h-6 ${isLiked ? "fill-purple-600 text-purple-600 dark:fill-purple-400 dark:text-purple-400" : ""}`} />
-          <span className="text-sm font-medium">{likes}</span>
+          <Heart className={`w-7 h-7 ${isLiked ? "fill-purple-600 text-purple-600 dark:fill-purple-400 dark:text-purple-400" : ""}`} />
+          <span className="text-base font-medium">{likes}</span>
         </button>
-        <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-          <MessageCircle className="w-6 h-6" />
-          <span className="text-sm font-medium">{post.comments}</span>
+        <button className="flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+          <MessageCircle className="w-7 h-7" />
+          <span className="text-base font-medium">{post.comments}</span>
         </button>
-        <button className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors ml-auto">
-          <Share2 className="w-6 h-6" />
+        <button className="flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors ml-auto">
+          <Share2 className="w-7 h-7" />
         </button>
       </div>
     </div>

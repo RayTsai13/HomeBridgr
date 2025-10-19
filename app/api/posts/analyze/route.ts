@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   const trimmedPostId = postId.trim();
 
   const { data: post, error: fetchError } = await supabaseAdmin
-    .from<StudentPostRecord>(POSTS_TABLE)
+    .from(POSTS_TABLE)
     .select("id, caption")
     .eq("id", trimmedPostId)
     .maybeSingle();

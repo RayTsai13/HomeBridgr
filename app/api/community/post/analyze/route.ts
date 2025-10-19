@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   const trimmedPostId = postId.trim();
 
   const { data: post, error: fetchError } = await supabaseAdmin
-    .from<CommunityPostRecord>(COMMUNITY_POSTS_TABLE)
+    .from(COMMUNITY_POSTS_TABLE)
     .select("id, text_content")
     .eq("id", trimmedPostId)
     .maybeSingle();
@@ -175,4 +175,3 @@ export async function POST(request: Request) {
     { status: 200 }
   );
 }
-

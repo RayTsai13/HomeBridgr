@@ -48,7 +48,7 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from<ProfileRecord>(PROFILES_TABLE)
+    .from(PROFILES_TABLE)
     .select("id, user_type")
     .eq("id", userId)
     .maybeSingle();
@@ -104,7 +104,7 @@ export async function PATCH(request: Request) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from<ProfileRecord>(PROFILES_TABLE)
+    .from(PROFILES_TABLE)
     .upsert(
       { id: userId, user_type: userType },
       { onConflict: "id" }

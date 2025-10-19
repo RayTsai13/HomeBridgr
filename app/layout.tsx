@@ -3,6 +3,7 @@ import { GeistSans, GeistMono } from 'geist/font'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { TranslationProvider } from '@/lib/translation-context'
+import { Toaster } from '@/components/ui/toaster'
 
 const _geist = GeistSans;
 const _geistMono = GeistMono;
@@ -24,6 +25,7 @@ export default function RootLayout({
         <TranslationProvider>
           {children}
         </TranslationProvider>
+        <Toaster />
         <Analytics />
       </body>
     </html>

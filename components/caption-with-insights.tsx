@@ -97,14 +97,14 @@ export function CaptionWithInsights({ text, terms }: CaptionWithInsightsProps) {
             key={`${segment.value}-${index}`}
             className="group relative inline-block font-semibold text-purple-700 dark:text-purple-300"
           >
-            <span className="rounded-sm bg-purple-100 px-1 dark:bg-purple-900/40">
+            <span className="rounded-sm bg-purple-100 px-1.5 dark:bg-purple-900/40">
               {segment.value}
             </span>
-            <span className="absolute left-1/2 top-full z-20 mt-1 hidden w-56 -translate-x-1/2 rounded-lg border border-purple-200 bg-white px-3 py-2 text-xs font-normal text-gray-700 shadow-lg transition-opacity dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 group-hover:block">
-              <span className="block text-xs font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-300">
+            <span className="absolute left-1/2 top-full z-20 mt-1.5 hidden w-64 sm:w-72 -translate-x-1/2 rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm font-normal text-gray-700 shadow-xl transition-opacity dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 group-hover:block">
+              <span className="block text-sm font-semibold uppercase tracking-wide text-purple-600 dark:text-purple-300">
                 Meaning
               </span>
-              <span className="mt-1 block text-left leading-snug">
+              <span className="mt-1.5 block text-left leading-relaxed">
                 {segment.explanation}
               </span>
             </span>

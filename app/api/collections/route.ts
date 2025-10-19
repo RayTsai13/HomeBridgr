@@ -9,6 +9,12 @@ type CreateCollectionRequest = {
   userId?: unknown;
   description?: unknown;
   visibility?: unknown;
+  // Extended postcard fields (optional)
+  items?: unknown;
+  postIds?: unknown;
+  fingerprint?: unknown;
+  source?: unknown;
+  metadata?: unknown;
 };
 
 type CollectionRecord = {
@@ -18,6 +24,11 @@ type CollectionRecord = {
   visibility?: string | null;
   created_by?: string | null;
   created_at?: string;
+  items?: unknown;
+  post_ids?: string[] | null;
+  fingerprint?: string | null;
+  source?: string | null;
+  metadata?: unknown;
   [key: string]: unknown;
 };
 
@@ -42,7 +53,7 @@ export async function GET(request: Request) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from<CollectionRecord>(COLLECTIONS_TABLE)
+    .from(COLLECTIONS_TABLE)
     .select("*")
     .eq("created_by", userId)
     .order("created_at", { ascending: false });
@@ -80,6 +91,45 @@ export async function POST(request: Request) {
   const description = sanitise(payload.description);
   const visibility = sanitise(payload.visibility);
 
+  // Optional postcard fields
+  const source = sanitise(payload.source);
+  const fingerprint = sanitise(payload.fingerprint);
+
+  // postIds: string[]
+  const postIds = Array.isArray(payload.postIds)
+    ? (payload.postIds
+        .map((v) => sanitise(v))
+        .filter((v): v is string => Boolean(v)) as string[])
+    : undefined;
+
+  // items: array of postcard item objects (light validation)
+  const rawItems = Array.isArray(payload.items) ? payload.items : undefined;
+  const items = rawItems
+    ? rawItems
+        .map((it) => {
+          if (!it || typeof it !== "object") return null;
+          const obj = it as Record<string, unknown>;
+          const post_id = sanitise(obj.post_id);
+          const image_url = sanitise(obj.image_url);
+          const caption = sanitise(obj.caption);
+          const author_id = sanitise(obj.author_id);
+          const author_name = sanitise(obj.author_name);
+          return {
+            ...(post_id ? { post_id } : {}),
+            ...(image_url ? { image_url } : {}),
+            ...(caption ? { caption } : {}),
+            ...(author_id ? { author_id } : {}),
+            ...(author_name ? { author_name } : {}),
+          };
+        })
+        .filter(Boolean)
+    : undefined;
+
+  const metadata =
+    payload.metadata && typeof payload.metadata === "object"
+      ? (payload.metadata as Record<string, unknown>)
+      : undefined;
+
   if (!name) {
     return NextResponse.json(
       { error: "`name` is required and must be a non-empty string." },
@@ -107,16 +157,48 @@ export async function POST(request: Request) {
     insertPayload.visibility = visibility;
   }
 
+  // Attach extended postcard fields when provided
+  if (items && items.length) {
+    insertPayload.items = items;
+  }
+  if (postIds && postIds.length) {
+    insertPayload.post_ids = postIds;
+  }
+  if (fingerprint) {
+    insertPayload.fingerprint = fingerprint;
+  }
+  if (source) {
+    insertPayload.source = source;
+  }
+  if (metadata) {
+    insertPayload.metadata = metadata;
+  }
+
   const {
     data: collection,
     error,
   } = await supabaseAdmin
-    .from<CollectionRecord>(COLLECTIONS_TABLE)
+    .from(COLLECTIONS_TABLE)
     .insert(insertPayload)
     .select("*")
     .single();
 
   if (error || !collection) {
+    // If this looks like a duplicate by (created_by, fingerprint), try to fetch existing
+    if (userId && fingerprint) {
+      const { data: existingList } = await supabaseAdmin
+        .from(COLLECTIONS_TABLE)
+        .select("*")
+        .eq("created_by", userId)
+        .eq("fingerprint", fingerprint)
+        .limit(1);
+
+      const existing = Array.isArray(existingList) && existingList.length > 0 ? existingList[0] : null;
+      if (existing) {
+        return NextResponse.json({ collection: existing }, { status: 200 });
+      }
+    }
+
     return NextResponse.json(
       {
         error: "Failed to create collection",

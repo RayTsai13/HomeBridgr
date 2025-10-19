@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     data: community,
     error: communityError,
   } = await supabaseAdmin
-    .from<CommunityRecord>(COMMUNITIES_TABLE)
+    .from(COMMUNITIES_TABLE)
     .insert(communityInsertPayload)
     .select("*")
     .single();
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     data: membership,
     error: membershipError,
   } = await supabaseAdmin
-    .from<CommunityMemberRecord>(COMMUNITY_MEMBERS_TABLE)
+    .from(COMMUNITY_MEMBERS_TABLE)
     .insert(membershipPayload)
     .select("*")
     .single();

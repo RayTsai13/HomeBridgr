@@ -61,4 +61,15 @@ export type Collection = {
   description?: string | null
   visibility?: string | null
   createdAt: Date
+  // Optional postcard details
+  fingerprint?: string | null
+  source?: string | null
+  postIds?: string[]
+  items?: Array<{
+    postId: string
+    imageUrl: string | null
+    caption: string | null
+    authorId: string | null
+    authorName: string | null
+  }>
 }

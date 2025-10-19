@@ -97,7 +97,7 @@ export async function GET(request: Request) {
     data: viewerProfile,
     error: profileError,
   } = await supabaseAdmin
-    .from<ProfileLookup>(PROFILES_TABLE)
+    .from(PROFILES_TABLE)
     .select("community_id")
     .eq("id", viewerId)
     .maybeSingle();
@@ -120,7 +120,7 @@ export async function GET(request: Request) {
     data: membershipCommunities,
     error: membershipError,
   } = await supabaseAdmin
-    .from<CommunityRecord>(COMMUNITIES_TABLE)
+    .from(COMMUNITIES_TABLE)
     .select("id, member_user_ids")
     .contains("member_user_ids", [viewerId]);
 
@@ -158,7 +158,7 @@ export async function GET(request: Request) {
       data: directCommunities,
       error: directError,
     } = await supabaseAdmin
-      .from<CommunityRecord>(COMMUNITIES_TABLE)
+      .from(COMMUNITIES_TABLE)
       .select("id, member_user_ids")
       .in("id", missingCommunityIds);
 
@@ -186,7 +186,7 @@ export async function GET(request: Request) {
   }
 
   const { data: posts, error } = await supabaseAdmin
-    .from<StudentPostRecord>(POSTS_TABLE)
+    .from(POSTS_TABLE)
     .select("*")
     .order("created_at", { ascending: false });
 
