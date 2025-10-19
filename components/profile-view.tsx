@@ -101,12 +101,12 @@ export function ProfileView() {
       <div className="grid grid-cols-3 gap-2">
         {galleryImages.map((src, idx) => (
           <div
-            key={i}
+            key={idx}
             className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-200 to-violet-200"
           >
             <Image
               src="/vibrant-community-connection.png"
-              alt={`Post ${i}`}
+              alt={`Post ${idx}`}
               fill
               className="object-cover hover:scale-110 transition-transform duration-300"
               sizes="(max-width: 768px) 33vw, 200px"
