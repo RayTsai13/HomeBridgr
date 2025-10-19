@@ -4,6 +4,7 @@ export type User = {
   displayName: string
   avatar: string
   bio: string
+  hometown: string
   location: string
   isInHomeCircle?: boolean
 }
@@ -16,6 +17,7 @@ export type Post = {
   author: User
   content: string
   image?: string
+  location: string
   timestamp: Date
   likes: number
   comments: number
@@ -23,6 +25,8 @@ export type Post = {
   // For message-summary posts
   messageCount?: number
   participants?: User[]
+  links?: { url: string; title: string }[]
+  images?: string[]
 }
 
 export type Message = {
