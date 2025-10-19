@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { MapPin, Users } from "lucide-react"
 import { PostTranslation } from "./post-translation"
@@ -84,11 +85,13 @@ export function TopLocationsSidebar() {
       <div className="space-y-4">
         {topLocations.map((location) => (
           <div key={location.id} className="flex flex-col gap-2">
-            <div className="relative">
-              <img
+            <div className="relative h-32 overflow-hidden rounded-xl">
+              <Image
                 src={location.image}
                 alt={location.name}
-                className="w-full h-32 rounded-xl object-cover"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 320px"
               />
               <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg">
                 <p className="text-white text-xs font-semibold">
@@ -135,4 +138,3 @@ export function TopLocationsSidebar() {
     </div>
   )
 }
-

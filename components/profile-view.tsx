@@ -1,6 +1,7 @@
 // ...existing code...
 "use client"
 
+import Image from "next/image"
 import { Settings, MapPin, Users } from "lucide-react"
 import { currentUser, mockPosts } from "@/lib/mock-data"
 
@@ -29,9 +30,11 @@ export function ProfileView() {
 
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center">
-          <img
+          <Image
             src={currentUser.avatar || "/placeholder.svg"}
             alt={currentUser.displayName}
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg mb-4"
           />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{currentUser.displayName}</h1>
@@ -98,13 +101,15 @@ export function ProfileView() {
       <div className="grid grid-cols-3 gap-2">
         {galleryImages.map((src, idx) => (
           <div
-            key={idx}
-            className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-200 to-violet-200"
+            key={i}
+            className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-200 to-violet-200"
           >
-            <img
-              src={src}
-              alt={`Post ${idx + 1}`}
-              className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+            <Image
+              src="/vibrant-community-connection.png"
+              alt={`Post ${i}`}
+              fill
+              className="object-cover hover:scale-110 transition-transform duration-300"
+              sizes="(max-width: 768px) 33vw, 200px"
             />
           </div>
         ))}
@@ -119,10 +124,12 @@ export function ProfileView() {
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">Your closest connections</p>
         <div className="flex -space-x-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <img
+            <Image
               key={i}
-              src={`/diverse-group.png?height=40&width=40&query=person ${i}`}
+              src="/diverse-group.png"
               alt={`Circle member ${i}`}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full border-2 border-white object-cover"
             />
           ))}

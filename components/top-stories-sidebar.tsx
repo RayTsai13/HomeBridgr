@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { TrendingUp, Eye, Clock } from "lucide-react"
 import { PostTranslation } from "./post-translation"
@@ -87,11 +88,13 @@ export function TopStoriesSidebar() {
       <div className="space-y-4">
         {topStories.map((story) => (
           <div key={story.id} className="flex flex-col gap-2 group cursor-pointer">
-            <div className="relative overflow-hidden rounded-xl">
-              <img
+            <div className="relative overflow-hidden rounded-xl h-32">
+              <Image
                 src={story.image}
                 alt={story.title}
-                className="w-full h-32 object-cover transition-transform group-hover:scale-105"
+                fill
+                className="object-cover transition-transform group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 320px"
               />
               {story.trending && (
                 <div className="absolute top-2 right-2 bg-red-500 px-2 py-1 rounded-lg flex items-center gap-1">
@@ -142,4 +145,3 @@ export function TopStoriesSidebar() {
     </div>
   )
 }
-

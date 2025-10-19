@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { X, ImageIcon, Smile, MapPin } from "lucide-react"
 import { currentUser } from "@/lib/mock-data"
@@ -11,6 +12,7 @@ interface PostComposerProps {
 export function PostComposer({ onClose }: PostComposerProps) {
   const [content, setContent] = useState("")
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const previewImageSrc = selectedImage ? selectedImage.split("?")[0] || selectedImage : null
 
   const handleImageSelect = () => {
     // In a real app, this would open a file picker
@@ -48,9 +50,11 @@ export function PostComposer({ onClose }: PostComposerProps) {
         <div className="p-4 overflow-y-auto max-h-[calc(90vh-140px)]">
           {/* User Info */}
           <div className="flex items-center gap-3 mb-4">
-            <img
+            <Image
               src={currentUser.avatar || "/placeholder.svg"}
               alt={currentUser.displayName}
+              width={48}
+              height={48}
               className="w-12 h-12 rounded-full object-cover"
             />
             <div>
@@ -69,9 +73,16 @@ export function PostComposer({ onClose }: PostComposerProps) {
           />
 
           {/* Image Preview */}
-          {selectedImage && (
+          {previewImageSrc && (
             <div className="relative mt-4 rounded-2xl overflow-hidden">
-              <img src={selectedImage || "/placeholder.svg"} alt="Selected" className="w-full max-h-96 object-cover" />
+              <Image
+                src={previewImageSrc}
+                alt="Selected"
+                width={1200}
+                height={900}
+                className="w-full h-auto object-cover max-h-96"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
               <button
                 onClick={() => setSelectedImage(null)}
                 className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors"

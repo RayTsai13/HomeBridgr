@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { Search, Send } from "lucide-react"
 import { mockConversations, currentUser } from "@/lib/mock-data"
@@ -29,9 +30,11 @@ export function MessagingView() {
           >
             ← Back
           </button>
-          <img
+          <Image
             src={otherParticipant?.avatar || "/placeholder.svg"}
-            alt={otherParticipant?.displayName}
+            alt={otherParticipant?.displayName || "Conversation participant"}
+            width={40}
+            height={40}
             className="w-10 h-10 rounded-full object-cover"
           />
           <div className="flex-1">
@@ -52,7 +55,7 @@ export function MessagingView() {
           </div>
           <div className="flex justify-end">
             <div className="gradient-purple rounded-2xl rounded-tr-sm px-4 py-3 max-w-xs">
-              <p className="text-white">That sounds great! I'd love to join.</p>
+              <p className="text-white">That sounds great! I&apos;d love to join.</p>
               <span className="text-xs text-purple-200 mt-1 block">2h ago</span>
             </div>
           </div>
@@ -110,9 +113,11 @@ export function MessagingView() {
               className="w-full flex items-center gap-3 p-4 bg-white rounded-2xl hover:bg-purple-50 transition-colors"
             >
               <div className="relative">
-                <img
+                <Image
                   src={otherParticipant?.avatar || "/placeholder.svg"}
-                  alt={otherParticipant?.displayName}
+                  alt={otherParticipant?.displayName || "Conversation participant"}
+                  width={56}
+                  height={56}
                   className="w-14 h-14 rounded-full object-cover"
                 />
                 {conversation.unreadCount > 0 && (
