@@ -153,7 +153,7 @@ export function ProfileView({ user }: ProfileViewProps) {
   return (
     <div className="max-w-2xl px-4 py-6 mx-auto">
       {/* Header with gradient background */}
-      <div className="relative p-6 mb-6 overflow-hidden rounded-3xl gradient-purple-soft dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-700">
+      <div className="gradient-purple-soft dark:bg-gradient-to-br dark:from-cyan-900 dark:to-cyan-700 rounded-3xl p-6 mb-6 relative overflow-hidden">
         <div className="absolute top-4 right-4">
           <button className="flex items-center justify-center w-10 h-10 transition-colors rounded-full bg-white/80 dark:bg-gray-700/80 hover:bg-white dark:hover:bg-gray-600">
             <Settings className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -169,15 +169,9 @@ export function ProfileView({ user }: ProfileViewProps) {
             height={96}
             className="w-24 h-24 mb-4 border-4 border-white rounded-full shadow-lg object-cover"
           />
-          <h1 className="mb-1 text-2xl font-bold text-gray-900 dark:text-white">
-            {profileInfo.displayName}
-          </h1>
-          <p className="mb-3 font-medium text-purple-600 dark:text-purple-400">
-            @{profileInfo.username}
-          </p>
-          <p className="max-w-md mb-4 text-gray-700 dark:text-gray-300">
-            {profileInfo.bio}
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{profileInfo.displayName}</h1>
+          <p className="text-purple-600 dark:text-lime-300 font-medium mb-3">@{profileInfo.username}</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-4 max-w-md">{profileInfo.bio}</p>
 
           {/* Location Info */}
           <div className="flex items-center gap-4 mb-4 text-gray-600 dark:text-gray-300">
@@ -241,14 +235,12 @@ export function ProfileView({ user }: ProfileViewProps) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 pb-3 mb-6 border-b border-purple-100 dark:border-gray-700">
-        <button className="flex-1 py-3 font-semibold text-purple-600 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-400">
-          Posts
-        </button>
-        <button className="flex-1 py-3 font-semibold text-gray-500 transition-colors dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">
+      <div className="flex gap-2 mb-6 border-b border-purple-100 dark:border-gray-700">
+        <button className="flex-1 py-3 text-purple-600 dark:text-lime-300 font-semibold border-b-2 border-purple-600 dark:border-lime-300">Posts</button>
+        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-lime-300 transition-colors">
           Liked
         </button>
-        <button className="flex-1 py-3 font-semibold text-gray-500 transition-colors dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400">
+        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-lime-300 transition-colors">
           Saved
         </button>
       </div>
@@ -261,7 +253,7 @@ export function ProfileView({ user }: ProfileViewProps) {
             className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-200 to-violet-200"
           >
             <Image
-              src="/vibrant-community-connection.png"
+              src={src}
               alt={`Post ${idx}`}
               fill
               className="object-cover transition-transform duration-300 hover:scale-110"
@@ -441,7 +433,7 @@ export function ProfileView({ user }: ProfileViewProps) {
               className="w-10 h-10 border-2 border-white rounded-full object-cover"
             />
           ))}
-          <button className="flex items-center justify-center w-10 h-10 text-sm font-semibold transition-colors rounded-full border-2 border-white dark:border-gray-800 bg-purple-100 dark:bg-gray-700 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-gray-600">
+          <button className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 bg-lime-300 dark:bg-gray-700 flex items-center justify-center text-lime-600 dark:text-lime-300 font-semibold text-sm hover:bg-lime-200 dark:hover:bg-gray-600 transition-colors">
             +12
           </button>
         </div>

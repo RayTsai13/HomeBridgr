@@ -92,7 +92,7 @@ export function SuggestedFriendsSidebar() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 followedIds.has(friend.id)
                   ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  : "bg-purple-600 text-white hover:bg-purple-700"
+                  : "bg-lime-400 text-white hover:bg-lime-500"
               }`}
             >
               {followedIds.has(friend.id) ? "Following" : "Follow"}

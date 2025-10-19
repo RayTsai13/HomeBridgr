@@ -105,8 +105,8 @@ export function PostCard({ post }: PostCardProps) {
                   className="block bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 rounded-lg px-3 py-2 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-purple-700 dark:text-purple-300">{link.title}</span>
-                    <ExternalLink className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <span className="text-sm font-medium text-black dark:text-lime-300">{link.title}</span>
+                    <ExternalLink className="w-4 h-4 text-lime-300 dark:text-lime-300" />
                   </div>
                 </a>
               ))}
@@ -130,7 +130,7 @@ export function PostCard({ post }: PostCardProps) {
               {post.participants?.[0]?.displayName}
             </span>
           </div>
-          <button className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
+          <button className="text-sm font-medium text-black dark:text-purple-400 hover:text-lime-700 dark:hover:text-lime-300 transition-colors">
             View Messages →
           </button>
         </div>

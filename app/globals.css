@@ -11,9 +11,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
+  --background: oklch(87.666% 0.10327 322.082);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: oklch(89.568% 0.16371 171.961);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -96,7 +96,7 @@
   --color-popover: 255 255 255;
   --color-popover-foreground: 20 15 35;
 
-  --color-primary: 139 92 246;
+  --color-primary: 183 255 0;
   --color-primary-foreground: 255 255 255;
 
   --color-secondary: 233 213 255;
@@ -113,7 +113,7 @@
 
   --color-border: 233 213 255;
   --color-input: 233 213 255;
-  --color-ring: 139 92 246;
+  --color-ring: 183 255 0;
 
   --radius: 1rem;
 
@@ -169,11 +169,11 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Custom gradient backgrounds */
+/* gradient backgrounds */
 .gradient-purple {
-  background: linear-gradient(135deg, rgb(167 139 250) 0%, rgb(139 92 246) 100%);
+  background: linear-gradient(135deg, rgb(139, 233, 250) 0%, rgb(204, 133, 255) 100%);
 }
 
 .gradient-purple-soft {
-  background: linear-gradient(135deg, rgb(243 237 255) 0%, rgb(233 213 255) 100%);
+  background: linear-gradient(135deg, rgb(243 237 255) 0%, rgb(156, 205, 255) 100%);
 }

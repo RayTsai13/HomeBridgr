@@ -246,27 +246,27 @@ export function PostComposer({ onClose, onPostCreated, author }: PostComposerPro
           />
           <button
             onClick={handleImageSelect}
-            className="flex items-center gap-2 rounded-full px-4 py-2 transition-colors hover:bg-purple-100"
+            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-lime-100 transition-colors"
             disabled={isSubmitting}
           >
-          <ImageIcon className="h-5 w-5 text-purple-600" />
-          <span className="text-sm font-medium text-gray-700">
-            {selectedFile ? "Change Photo" : "Photo"}
-          </span>
-        </button>
-          <button
-            className="flex items-center gap-2 rounded-full px-4 py-2 transition-colors hover:bg-purple-100"
-            disabled
-          >
-            <Smile className="h-5 w-5 text-purple-300" />
-            <span className="text-sm font-medium text-gray-400">Emoji</span>
+            <ImageIcon className="w-5 h-5 text-lime-500" />
+            <span className="text-sm font-medium text-gray-700">
+              {selectedFile ? "Change Photo" : "Photo"}
+            </span>
           </button>
           <button
-            className="flex items-center gap-2 rounded-full px-4 py-2 transition-colors hover:bg-purple-100"
+            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-lime-100 transition-colors"
             disabled
           >
-            <MapPin className="h-5 w-5 text-purple-300" />
-            <span className="text-sm font-medium text-gray-400">Location</span>
+            <Smile className="w-5 h-5 text-lime-500" />
+            <span className="text-sm font-medium text-gray-700">Emoji</span>
+          </button>
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-lime-100 transition-colors"
+            disabled
+          >
+            <MapPin className="w-5 h-5 text-lime-500" />
+            <span className="text-sm font-medium text-gray-700">Location</span>
           </button>
         </div>
       </div>

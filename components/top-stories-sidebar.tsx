@@ -81,7 +81,7 @@ export function TopStoriesSidebar() {
   return (
     <div className="w-80 bg-white/60 backdrop-blur-sm rounded-2xl p-5 shadow-sm sticky top-20 h-fit">
       <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-5 h-5 text-purple-600" />
+        <TrendingUp className="w-5 h-5 text-lime-500" />
         <h2 className="text-lg font-bold text-gray-900">Top Stories</h2>
       </div>
       
@@ -127,7 +127,7 @@ export function TopStoriesSidebar() {
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                   bookmarkedIds.has(story.id)
                     ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    : "bg-purple-600 text-white hover:bg-purple-700"
+                    : "bg-lime-400 text-white hover:bg-lime-500"
                 }`}
               >
                 {bookmarkedIds.has(story.id) ? "Saved" : "Read"}
