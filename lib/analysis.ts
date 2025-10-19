@@ -45,12 +45,12 @@ type BedrockResponseShape = {
 
 function buildPrompt(caption: string): string {
   return [
-    "You help families and friends living in a student's home country make sense of that student's social media captions.",
-    "Identify words, abbreviations, emojis, locations, or cultural references that might be unfamiliar to people who do not live in the student's current community or country.",
-    "List each potentially confusing item with a concise 1-2 sentence explanation that references the caption and explains why someone back home might not understand it.",
+    "You help  by clarifying student social media captions.",
+    "Identify slang, acronyms, cultural references, or locations that could confuse someone who is not of the culture or area.",
+    "List each confusing term alongside a brief 1-2 sentence explanation that references the caption context.",
     "Respond with strict JSON matching this schema:",
     '{ "terms": [ { "term": string, "explanation": string } ] }',
-    "Provide between 2 and 7 terms when possible. If nothing will be confusing, include one entry that gently explains why the caption is already clear.",
+    "Provide between 2 and 7 terms when possible. If no confusing terms exist, explain why in one entry.",
     "Caption:",
     caption.trim(),
   ].join("\n\n");

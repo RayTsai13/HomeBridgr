@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sparky antialiased`}>
+      <body className="antialiased">
         {children}
         <Analytics />
       </body>
