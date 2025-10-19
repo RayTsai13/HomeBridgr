@@ -4,8 +4,10 @@ import Image from "next/image"
 import { Heart, MessageCircle, Share2, MapPin, ExternalLink } from "lucide-react"
 import type { Post } from "@/lib/types"
 import { formatTimeAgo } from "@/lib/utils"
-import { useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { PostTranslation } from "./post-translation"
+import { CaptionWithInsights } from "./caption-with-insights"
+import { analyzePost } from "@/lib/api/posts"
 
 interface PostCardProps {
   post: Post
@@ -14,6 +16,39 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked || false)
   const [likes, setLikes] = useState(post.likes)
+  const [analysisTerms, setAnalysisTerms] = useState(post.analysisTerms ?? null)
+  const autoRequestedRef = useRef(false)
+
+  useEffect(() => {
+    setAnalysisTerms(post.analysisTerms ?? null)
+  }, [post.analysisTerms])
+
+  const canAnalyze = useMemo(() => {
+    return (
+      post.type === "user" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        post.id
+      )
+    )
+  }, [post])
+
+  const runAnalysis = useCallback(async () => {
+    try {
+      const result = await analyzePost(post.id)
+      if (result.terms.length) {
+        setAnalysisTerms(result.terms)
+      }
+    } catch (error) {
+      console.error("Caption analysis failed:", error)
+    }
+  }, [post.id])
+
+  useEffect(() => {
+    if (!analysisTerms && canAnalyze && !autoRequestedRef.current) {
+      autoRequestedRef.current = true
+      void runAnalysis()
+    }
+  }, [analysisTerms, canAnalyze, runAnalysis])
 
   const handleLike = () => {
     setIsLiked(!isLiked)
@@ -131,9 +166,13 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Content */}
       <div className="px-4 pb-3">
-        <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
-          <PostTranslation text={post.content} componentType="post-card" />
-        </p>
+        {analysisTerms && analysisTerms.length > 0 ? (
+          <CaptionWithInsights text={post.content} terms={analysisTerms} />
+        ) : (
+          <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+            <PostTranslation text={post.content} componentType="post-card" />
+          </p>
+        )}
       </div>
 
       {/* Image */}

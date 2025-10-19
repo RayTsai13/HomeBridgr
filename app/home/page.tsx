@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser"
 import { useTranslation } from "@/lib/translation-context"
+import type { SupportedLanguage } from "@/lib/translation"
+import type { SessionUser } from "@/lib/types"
 import { HomeFeed } from "@/components/home-feed"
 import { DiscoverFeed } from "@/components/discover-feed"
 import { MessagingView } from "@/components/messaging-view"
@@ -25,6 +27,8 @@ export default function HomePage() {
   const [showComposer, setShowComposer] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
+  const [feedRefreshToken, setFeedRefreshToken] = useState(0)
 
   useEffect(() => {
     let isMounted = true
@@ -40,7 +44,22 @@ export default function HomePage() {
       }
 
       if (isMounted) {
+        const metadata = (session.user.user_metadata ?? {}) as Record<string, unknown>
+        const displayName =
+          (typeof metadata.full_name === "string" && metadata.full_name) ||
+          (typeof metadata.name === "string" && metadata.name) ||
+          (session.user.email ? session.user.email.split("@")[0] : null)
+
+        const avatarUrl =
+          (typeof metadata.avatar_url === "string" && metadata.avatar_url) || null
+
         setAuthChecked(true)
+        setSessionUser({
+          id: session.user.id,
+          email: session.user.email ?? null,
+          displayName: displayName ?? null,
+          avatarUrl,
+        })
       }
     }
 
@@ -51,8 +70,24 @@ export default function HomePage() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         router.replace("/login")
+        setSessionUser(null)
       } else {
+        const metadata = (session.user.user_metadata ?? {}) as Record<string, unknown>
+        const displayName =
+          (typeof metadata.full_name === "string" && metadata.full_name) ||
+          (typeof metadata.name === "string" && metadata.name) ||
+          (session.user.email ? session.user.email.split("@")[0] : null)
+
+        const avatarUrl =
+          (typeof metadata.avatar_url === "string" && metadata.avatar_url) || null
+
         setAuthChecked(true)
+        setSessionUser({
+          id: session.user.id,
+          email: session.user.email ?? null,
+          displayName: displayName ?? null,
+          avatarUrl,
+        })
       }
     })
 
@@ -64,6 +99,7 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    setSessionUser(null)
     router.replace("/login")
   }
 
@@ -90,11 +126,16 @@ export default function HomePage() {
           </h1>
           
           <div className="flex items-center gap-4">
+            {sessionUser?.email && (
+              <span className="hidden md:inline text-sm text-gray-600 dark:text-gray-300">
+                Signed in as {sessionUser.email}
+              </span>
+            )}
             {/* Language Selector */}
             <div className="relative">
               <select
                 value={currentLanguage}
-                onChange={(e) => setLanguage(e.target.value as any)}
+                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
                 disabled={isTranslating}
                 className="appearance-none bg-purple-50 dark:bg-gray-700 text-purple-700 dark:text-purple-300 px-3 py-2 pr-8 rounded-lg text-sm font-medium border border-purple-200 dark:border-gray-600 hover:bg-purple-100 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -142,10 +183,10 @@ export default function HomePage() {
           
           {/* Main Feed */}
           <div className={(currentView === "home" || currentView === "discover") ? "flex-1 max-w-4xl" : "flex-1 max-w-2xl mx-auto px-4"}>
-            {currentView === "home" && <HomeFeed />}
+            {currentView === "home" && <HomeFeed refreshToken={feedRefreshToken} />}
             {currentView === "discover" && <DiscoverFeed />}
             {currentView === "messages" && <MessagingView />}
-            {currentView === "profile" && <ProfileView />}
+            {currentView === "profile" && <ProfileView user={sessionUser} />}
           </div>
           
           {/* Right Sidebar - Show on Home view */}
@@ -222,7 +263,13 @@ export default function HomePage() {
       </nav>
 
       {/* Post Composer Modal */}
-      {showComposer && <PostComposer onClose={() => setShowComposer(false)} />}
+      {showComposer && (
+        <PostComposer
+          author={sessionUser}
+          onClose={() => setShowComposer(false)}
+          onPostCreated={() => setFeedRefreshToken((prev) => prev + 1)}
+        />
+      )}
     </div>
   )
 }

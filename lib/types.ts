@@ -22,6 +22,9 @@ export type Post = {
   likes: number
   comments: number
   isLiked?: boolean
+  analysisTerms?: { term: string; explanation: string }[]
+  analysisGeneratedAt?: Date
+  analysisRawText?: string
   // For message-summary posts
   messageCount?: number
   participants?: User[]
@@ -43,4 +46,19 @@ export type Conversation = {
   participants: User[]
   lastMessage: Message
   unreadCount: number
+}
+
+export type SessionUser = {
+  id: string
+  email: string | null
+  displayName: string | null
+  avatarUrl: string | null
+}
+
+export type Collection = {
+  id: string
+  name: string
+  description?: string | null
+  visibility?: string | null
+  createdAt: Date
 }

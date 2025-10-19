@@ -20,9 +20,11 @@
     "start": "next start",
     "test": "vitest",
     "type-check": "tsc --noEmit",
-    "bedrock:analyze": "tsx scripts/run_bedrock_analysis.ts"
+    "bedrock:analyze": "tsx scripts/run_bedrock_analysis.ts",
+    "seed:posts": "tsx scripts/seed_student_posts.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.913.0",
     "@google/generative-ai": "^0.24.1",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
@@ -32,6 +34,7 @@
     "@vercel/analytics": "^1.5.0",
     "autoprefixer": "^10.4.21",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
     "geist": "^1.5.1",
     "lucide-react": "^0.546.0",
     "next": "^14.0.0",
@@ -48,6 +51,8 @@
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
     "postcss": "^8.5",
-    "typescript": "^5.0.0"
+    "tsx": "^4.20.6",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4"
   }
 }
