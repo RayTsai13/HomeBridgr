@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, MessageCircle, Share2, Users } from "lucide-react"
+import { Heart, MessageCircle, Share2, MapPin } from "lucide-react"
 import type { Post } from "@/lib/types"
 import { formatTimeAgo } from "@/lib/utils"
 import { useState } from "react"
@@ -20,29 +20,52 @@ export function PostCard({ post }: PostCardProps) {
 
   if (post.type === "message-summary") {
     return (
-      <div className="bg-gradient-to-br from-purple-100 to-violet-100 rounded-3xl p-6 mb-4 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center">
-            <Users className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-purple-900">Message Summary</h3>
-            <p className="text-sm text-purple-700">{formatTimeAgo(post.timestamp)}</p>
-          </div>
-        </div>
-        <p className="text-purple-900 mb-4">{post.content}</p>
-        <div className="flex items-center gap-2">
-          <div className="flex -space-x-2">
-            {post.participants?.slice(0, 3).map((participant) => (
+      <div className="bg-white rounded-3xl overflow-hidden mb-4 shadow-sm">
+        {/* Image Collage Grid */}
+        <div className="relative h-80 grid grid-cols-2 gap-1 p-1">
+          {post.participants?.slice(0, 4).map((participant, index) => (
+            <div
+              key={participant.id}
+              className="relative overflow-hidden rounded-2xl"
+            >
               <img
-                key={participant.id}
                 src={participant.avatar || "/placeholder.svg"}
                 alt={participant.displayName}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+          
+          {/* Central Message Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/95 backdrop-blur-md rounded-3xl px-8 py-6 shadow-2xl max-w-xs text-center">
+              <p className="text-2xl font-bold text-gray-900 mb-2">
+                {post.content}
+              </p>
+              <p className="text-sm text-gray-500">
+                catch up with {post.participants?.[0]?.displayName}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-4 py-3 border-t border-purple-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {post.participants?.[0] && (
+              <img
+                src={post.participants[0].avatar || "/placeholder.svg"}
+                alt={post.participants[0].displayName}
                 className="w-8 h-8 rounded-full border-2 border-white"
               />
-            ))}
+            )}
+            <span className="text-sm font-medium text-gray-700">
+              {post.participants?.[0]?.displayName}
+            </span>
           </div>
-          <span className="text-sm text-purple-700 font-medium">{post.messageCount} new messages</span>
+          <button className="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors">
+            View Messages →
+          </button>
         </div>
       </div>
     )
@@ -59,7 +82,11 @@ export function PostCard({ post }: PostCardProps) {
         />
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900">{post.author.displayName}</h3>
-          <p className="text-sm text-gray-500">{formatTimeAgo(post.timestamp)}</p>
+          <p className="text-sm text-gray-500" suppressHydrationWarning>{formatTimeAgo(post.timestamp)}</p>
+        </div>
+        <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-4 py-2 rounded-full">
+          <MapPin className="w-5 h-5" />
+          <span className="text-sm font-medium">{post.author.location}</span>
         </div>
       </div>
 
