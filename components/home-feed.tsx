@@ -6,7 +6,11 @@ import { PostCard } from "./post-card"
 import type { Post } from "@/lib/types"
 import { fetchPosts } from "@/lib/api/posts"
 
-export function HomeFeed() {
+interface HomeFeedProps {
+  refreshToken?: number
+}
+
+export function HomeFeed({ refreshToken = 0 }: HomeFeedProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +46,11 @@ export function HomeFeed() {
       mountedRef.current = false
     }
   }, [loadPosts])
+
+  useEffect(() => {
+    if (!mountedRef.current) return
+    void loadPosts()
+  }, [loadPosts, refreshToken])
 
   const handleRetry = () => {
     if (!mountedRef.current) return
