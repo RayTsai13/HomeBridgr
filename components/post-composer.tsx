@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { X, ImageIcon, Smile, MapPin } from "lucide-react"
 import { currentUser } from "@/lib/mock-data"
 
 interface PostComposerProps {
@@ -13,7 +14,7 @@ export function PostComposer({ onClose }: PostComposerProps) {
 
   const handleImageSelect = () => {
     // In a real app, this would open a file picker
-    setSelectedImage("/assets_photos/placeholder.svg?height=400&width=600")
+    setSelectedImage("/placeholder.svg?height=400&width=600")
   }
 
   const handlePost = () => {
@@ -31,7 +32,7 @@ export function PostComposer({ onClose }: PostComposerProps) {
             onClick={onClose}
             className="w-10 h-10 rounded-full hover:bg-purple-100 flex items-center justify-center transition-colors"
           >
-            <span className="text-gray-600">✕</span>
+            <X className="w-6 h-6 text-gray-600" />
           </button>
           <h2 className="text-lg font-semibold text-gray-900">Create Post</h2>
           <button
@@ -48,7 +49,7 @@ export function PostComposer({ onClose }: PostComposerProps) {
           {/* User Info */}
           <div className="flex items-center gap-3 mb-4">
             <img
-              src={currentUser.avatar || "/assets_photos/placeholder.svg"}
+              src={currentUser.avatar || "/placeholder.svg"}
               alt={currentUser.displayName}
               className="w-12 h-12 rounded-full object-cover"
             />
@@ -70,12 +71,12 @@ export function PostComposer({ onClose }: PostComposerProps) {
           {/* Image Preview */}
           {selectedImage && (
             <div className="relative mt-4 rounded-2xl overflow-hidden">
-              <img src={selectedImage || "/assets_photos/placeholder.svg"} alt="Selected" className="w-full max-h-96 object-cover" />
+              <img src={selectedImage || "/placeholder.svg"} alt="Selected" className="w-full max-h-96 object-cover" />
               <button
                 onClick={() => setSelectedImage(null)}
                 className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors"
               >
-                <span className="text-white">✕</span>
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
           )}
@@ -87,15 +88,15 @@ export function PostComposer({ onClose }: PostComposerProps) {
             onClick={handleImageSelect}
             className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-purple-100 transition-colors"
           >
-            <span className="text-purple-600">📷</span>
+            <ImageIcon className="w-5 h-5 text-purple-600" />
             <span className="text-sm font-medium text-gray-700">Photo</span>
           </button>
           <button className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-purple-100 transition-colors">
-            <span className="text-purple-600">😊</span>
+            <Smile className="w-5 h-5 text-purple-600" />
             <span className="text-sm font-medium text-gray-700">Emoji</span>
           </button>
           <button className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-purple-100 transition-colors">
-            <span className="text-purple-600">📍</span>
+            <MapPin className="w-5 h-5 text-purple-600" />
             <span className="text-sm font-medium text-gray-700">Location</span>
           </button>
         </div>

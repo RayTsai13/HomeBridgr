@@ -1,5 +1,6 @@
 "use client"
 
+import { Settings, MapPin, Users } from "lucide-react"
 import { currentUser, mockPosts } from "@/lib/mock-data"
 
 export function ProfileView() {
@@ -11,14 +12,14 @@ export function ProfileView() {
       <div className="gradient-purple-soft rounded-3xl p-6 mb-6 relative overflow-hidden">
         <div className="absolute top-4 right-4">
           <button className="w-10 h-10 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors">
-            <span className="text-purple-600">⚙️</span>
+            <Settings className="w-5 h-5 text-purple-600" />
           </button>
         </div>
 
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center">
           <img
-            src={currentUser.avatar || "/assets_photos/placeholder.svg"}
+            src={currentUser.avatar || "/placeholder.svg"}
             alt={currentUser.displayName}
             className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg mb-4"
           />
@@ -28,7 +29,7 @@ export function ProfileView() {
 
           {/* Location */}
           <div className="flex items-center gap-2 text-gray-600 mb-4">
-            <span>📍</span>
+            <MapPin className="w-4 h-4" />
             <span className="text-sm">{currentUser.location}</span>
           </div>
 
@@ -79,7 +80,7 @@ export function ProfileView() {
             className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-200 to-violet-200"
           >
             <img
-              src={`/assets_photos/vibrant-community-connection.png?height=300&width=300&query=social media post ${i}`}
+              src={`/vibrant-community-connection.png?height=300&width=300&query=social media post ${i}`}
               alt={`Post ${i}`}
               className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
             />
@@ -90,7 +91,7 @@ export function ProfileView() {
       {/* Home Circle Section */}
       <div className="mt-8 bg-white rounded-3xl p-6">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-purple-600">👥</span>
+          <Users className="w-5 h-5 text-purple-600" />
           <h2 className="text-xl font-bold text-gray-900">Home Circle</h2>
         </div>
         <p className="text-gray-600 text-sm mb-4">Your closest connections</p>
@@ -98,7 +99,7 @@ export function ProfileView() {
           {[1, 2, 3, 4, 5].map((i) => (
             <img
               key={i}
-              src={`/assets_photos/diverse-group.png?height=40&width=40&query=person ${i}`}
+              src={`/diverse-group.png?height=40&width=40&query=person ${i}`}
               alt={`Circle member ${i}`}
               className="w-10 h-10 rounded-full border-2 border-white object-cover"
             />

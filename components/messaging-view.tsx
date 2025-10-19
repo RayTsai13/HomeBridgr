@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Search, Send } from "lucide-react"
 import { mockConversations, currentUser } from "@/lib/mock-data"
 import { formatTimeAgo } from "@/lib/utils"
 import type { Conversation } from "@/lib/types"
@@ -29,7 +30,7 @@ export function MessagingView() {
             ← Back
           </button>
           <img
-            src={otherParticipant?.avatar || "/assets_photos/placeholder.svg"}
+            src={otherParticipant?.avatar || "/placeholder.svg"}
             alt={otherParticipant?.displayName}
             className="w-10 h-10 rounded-full object-cover"
           />
@@ -73,7 +74,7 @@ export function MessagingView() {
               disabled={!messageInput.trim()}
               className="w-10 h-10 rounded-full gradient-purple flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
             >
-              <span className="text-white">📤</span>
+              <Send className="w-5 h-5 text-white" />
             </button>
           </div>
         </div>
@@ -89,7 +90,7 @@ export function MessagingView() {
 
         {/* Search */}
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search messages..."
@@ -110,7 +111,7 @@ export function MessagingView() {
             >
               <div className="relative">
                 <img
-                  src={otherParticipant?.avatar || "/assets_photos/placeholder.svg"}
+                  src={otherParticipant?.avatar || "/placeholder.svg"}
                   alt={otherParticipant?.displayName}
                   className="w-14 h-14 rounded-full object-cover"
                 />
