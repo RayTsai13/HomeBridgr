@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser"
 import { HomeFeed } from "@/components/home-feed"
 import { DiscoverFeed } from "@/components/discover-feed"
 import { MessagingView } from "@/components/messaging-view"
@@ -17,18 +18,65 @@ type View = "home" | "discover" | "messages" | "profile"
 
 export default function HomePage() {
   const router = useRouter()
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
   const [currentView, setCurrentView] = useState<View>("home")
   const [showComposer, setShowComposer] = useState(false)
   const [language, setLanguage] = useState("en")
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
 
-  const handleLogout = () => {
-    router.push("/login")
+  useEffect(() => {
+    let isMounted = true
+
+    const enforceAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        router.replace("/login")
+        return
+      }
+
+      if (isMounted) {
+        setAuthChecked(true)
+      }
+    }
+
+    enforceAuth()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.replace("/login")
+      } else {
+        setAuthChecked(true)
+      }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [router, supabase])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.replace("/login")
   }
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode)
     document.documentElement.classList.toggle("dark")
+  }
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse text-purple-600">Loading your feed...</div>
+      </div>
+    )
   }
 
   return (
@@ -180,4 +228,3 @@ export default function HomePage() {
     </div>
   )
 }
-

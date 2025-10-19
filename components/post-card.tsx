@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Heart, MessageCircle, Share2, MapPin, ExternalLink } from "lucide-react"
 import type { Post } from "@/lib/types"
 import { formatTimeAgo } from "@/lib/utils"
@@ -26,12 +27,14 @@ export function PostCard({ post }: PostCardProps) {
           {post.images?.slice(0, 4).map((image, index) => (
             <div
               key={index}
-              className="relative overflow-hidden rounded-2xl"
+              className="relative h-full overflow-hidden rounded-2xl"
             >
-              <img
+              <Image
                 src={image || "/placeholder.svg"}
                 alt={`Shared image ${index + 1}`}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 50vw, 25vw"
               />
             </div>
           ))}
@@ -79,9 +82,11 @@ export function PostCard({ post }: PostCardProps) {
         <div className="px-4 py-3 border-t border-purple-100 dark:border-gray-700 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {post.participants?.[0] && (
-              <img
+              <Image
                 src={post.participants[0].avatar || "/placeholder.svg"}
                 alt={post.participants[0].displayName}
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-700"
               />
             )}
@@ -101,9 +106,11 @@ export function PostCard({ post }: PostCardProps) {
     <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden mb-4 shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-3 p-4">
-        <img
+        <Image
           src={post.author.avatar || "/placeholder.svg"}
           alt={post.author.displayName}
+          width={48}
+          height={48}
           className="w-12 h-12 rounded-full object-cover"
         />
         <div className="flex-1">
@@ -129,10 +136,13 @@ export function PostCard({ post }: PostCardProps) {
       {/* Image */}
       {post.image && (
         <div className="px-4 pb-3">
-          <img
+          <Image
             src={post.image || "/placeholder.svg"}
             alt="Post content"
-            className="w-full rounded-2xl object-cover max-h-96"
+            width={1200}
+            height={900}
+            className="w-full h-auto rounded-2xl object-cover max-h-96"
+            sizes="100vw"
           />
         </div>
       )}

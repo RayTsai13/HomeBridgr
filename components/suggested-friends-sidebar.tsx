@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
 import { UserPlus } from "lucide-react"
 
@@ -71,9 +72,11 @@ export function SuggestedFriendsSidebar() {
       <div className="space-y-4">
         {suggestedFriends.map((friend) => (
           <div key={friend.id} className="flex items-center gap-3">
-            <img
+            <Image
               src={friend.avatar}
               alt={friend.name}
+              width={48}
+              height={48}
               className="w-12 h-12 rounded-full object-cover"
             />
             <div className="flex-1 min-w-0">
@@ -106,4 +109,3 @@ export function SuggestedFriendsSidebar() {
     </div>
   )
 }
-
