@@ -32,10 +32,11 @@ export function ProfileView({ user }: ProfileViewProps) {
 
   const profileInfo = useMemo(() => {
     const fallback = currentUser
-    const displayName =
-      user?.displayName ??
-      user?.email?.split("@")[0] ??
-      fallback.displayName
+    // Prefer an explicit display name; otherwise use the fallback mock name
+    // rather than deriving from the email local-part. This keeps the header
+    // showing a friendly name like "Wei Chen" while still showing the actual
+    // username/handle below.
+    const displayName = user?.displayName ?? fallback.displayName
     const username =
       user?.email?.split("@")[0] ??
       fallback.username

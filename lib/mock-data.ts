@@ -3,7 +3,7 @@ import type { User, Post, Message, Conversation } from "./types"
 export const currentUser: User = {
   id: "1",
   username: "test_user",
-  displayName: "Raymond Tsai",
+  displayName: "Wei Chen",
   avatar: "/raymond.jpg",
   bio: "UW Freshman",
   hometown: "Taoyuan, Taiwan",

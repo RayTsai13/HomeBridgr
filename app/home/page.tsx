@@ -31,11 +31,32 @@ export default function HomePage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
   const [feedRefreshToken, setFeedRefreshToken] = useState(0)
+  const USER_TYPE_STORAGE_KEY = "hb_selected_user_type"
 
   useEffect(() => {
     let isMounted = true
 
     const enforceAuth = async () => {
+      // If redirected here from a magic link or OAuth provider,
+      // exchange the URL code/hash for a session before checking it.
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href)
+        const hasCodeParam = !!url.searchParams.get("code")
+        const hasAccessTokenHash = url.hash.includes("access_token")
+
+        if (hasCodeParam || hasAccessTokenHash) {
+          const { error } = await supabase.auth.exchangeCodeForSession(
+            window.location.href
+          )
+          if (error) {
+            // Non-fatal: we’ll still proceed to check the current session
+            // so users get routed appropriately.
+            // eslint-disable-next-line no-console
+            console.error("Auth code exchange failed", error)
+          }
+        }
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -98,6 +119,42 @@ export default function HomePage() {
       subscription.unsubscribe()
     }
   }, [router, supabase])
+
+  // Apply any pending role selection saved before/at login
+  useEffect(() => {
+    const applyPendingRole = async () => {
+      if (!sessionUser?.id || typeof window === "undefined") return
+      const pending = window.localStorage.getItem(USER_TYPE_STORAGE_KEY)
+      if (pending !== "student" && pending !== "community") return
+
+      try {
+        const res = await fetch(`/api/profiles?userId=${encodeURIComponent(sessionUser.id)}`, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        })
+        const body = (await res.json().catch(() => ({}))) as {
+          profile?: { user_type?: string | null } | null
+        }
+        if (res.ok && body.profile?.user_type) {
+          window.localStorage.removeItem(USER_TYPE_STORAGE_KEY)
+          return
+        }
+
+        const patch = await fetch("/api/profiles", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: sessionUser.id, userType: pending }),
+        })
+        if (patch.ok) {
+          window.localStorage.removeItem(USER_TYPE_STORAGE_KEY)
+        }
+      } catch (e) {
+        // Silent failure; user can set later from login page if needed
+      }
+    }
+
+    void applyPendingRole()
+  }, [sessionUser])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

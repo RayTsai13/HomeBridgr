@@ -19,6 +19,15 @@ export default function LoginPage() {
     "student" | "community" | null
   >(null)
   const [profileError, setProfileError] = useState<string | null>(null)
+  const USER_TYPE_STORAGE_KEY = "hb_selected_user_type"
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const stored = window.localStorage.getItem(USER_TYPE_STORAGE_KEY)
+    if (stored === "student" || stored === "community") {
+      setSelectedUserType(stored)
+    }
+  }, [])
   const submitUserType = async () => {
     if (!userId || !selectedUserType) {
       return
@@ -43,6 +52,9 @@ export default function LoginPage() {
       }
 
       setNeedsUserType(false)
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(USER_TYPE_STORAGE_KEY)
+      }
       router.replace("/home")
     } catch (error) {
       setSubmitError(
@@ -104,13 +116,19 @@ export default function LoginPage() {
         }
 
         setProfileError(null)
-        setSelectedUserType(null)
         setSubmitError(null)
         setNeedsUserType(true)
+        // If a preference was chosen pre-auth, submit it immediately
+        if (
+          (selectedUserType === "student" || selectedUserType === "community") &&
+          !isSubmitting
+        ) {
+          await submitUserType()
+          return
+        }
       } catch (error) {
         console.error("Failed to load profile", error)
         setNeedsUserType(false)
-        setSelectedUserType(null)
         setProfileError(
           error instanceof Error
             ? error.message
@@ -119,7 +137,7 @@ export default function LoginPage() {
         setSubmitError(null)
       }
     },
-    [router]
+    [router, isSubmitting, selectedUserType]
   )
 
   useEffect(() => {
@@ -212,83 +230,92 @@ export default function LoginPage() {
             </div>
           </div>
         ) : null}
-        {needsUserType ? (
-          <div className="bg-white border border-purple-100 shadow-sm rounded-2xl p-6 space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Finish setting up your account
-            </h2>
-            <p className="text-sm text-gray-600">
-              Tell us how you plan to use HomeBridgr so we can tailor the
-              experience.
-            </p>
-            {submitError ? (
-              <div className="space-y-2">
-                <p className="text-sm text-red-600">{submitError}</p>
-              </div>
-            ) : null}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                disabled={isSubmitting || !userId}
-                onClick={() => {
-                  setSubmitError(null)
-                  setSelectedUserType((current) =>
-                    current === "student" ? null : "student"
-                  )
-                }}
-                className={`rounded-xl border px-4 py-3 text-left transition disabled:opacity-50 ${
-                  selectedUserType === "student"
-                    ? "border-purple-500 bg-purple-50 shadow-sm"
-                    : "border-purple-200 hover:border-purple-300 hover:bg-purple-50"
-                }`}
-              >
-                <span className="block text-base font-medium text-gray-900">
-                  I’m a student
-                </span>
-                <span className="mt-1 block text-sm text-gray-600">
-                  Connect with family and share campus life updates.
-                </span>
-              </button>
-              <button
-                type="button"
-                disabled={isSubmitting || !userId}
-                onClick={() => {
-                  setSubmitError(null)
-                  setSelectedUserType((current) =>
-                    current === "community" ? null : "community"
-                  )
-                }}
-                className={`rounded-xl border px-4 py-3 text-left transition disabled:opacity-50 ${
-                  selectedUserType === "community"
-                    ? "border-purple-500 bg-purple-50 shadow-sm"
-                    : "border-purple-200 hover:border-purple-300 hover:bg-purple-50"
-                }`}
-              >
-                <span className="block text-base font-medium text-gray-900">
-                  I’m community
-                </span>
-                <span className="mt-1 block text-sm text-gray-600">
-                  Coordinate updates and stay close with students.
-                </span>
-              </button>
+        <div className="bg-white border border-purple-100 shadow-sm rounded-2xl p-6 space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Choose how you'll use HomeBridgr
+          </h2>
+          <p className="text-sm text-gray-600">
+            Pick one. We'll save it automatically after you sign in.
+          </p>
+          {submitError ? (
+            <div className="space-y-2">
+              <p className="text-sm text-red-600">{submitError}</p>
             </div>
+          ) : null}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
               type="button"
+              disabled={isSubmitting}
               onClick={() => {
-                void submitUserType()
+                setSubmitError(null)
+                setSelectedUserType((current) => {
+                  const next = current === "student" ? null : "student"
+                  if (typeof window !== "undefined") {
+                    if (next) {
+                      window.localStorage.setItem(USER_TYPE_STORAGE_KEY, next)
+                    } else {
+                      window.localStorage.removeItem(USER_TYPE_STORAGE_KEY)
+                    }
+                  }
+                
+                  // If already signed in and need type, apply immediately
+                  if (next && needsUserType && userId && !isSubmitting) {
+                    void submitUserType()
+                  }
+                  return next
+                })
               }}
-              disabled={
-                isSubmitting || !userId || selectedUserType === null
-              }
-              className="w-full rounded-xl bg-purple-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:bg-purple-300"
+              className={`rounded-xl border px-4 py-3 text-left transition disabled:opacity-50 ${
+                selectedUserType === "student"
+                  ? "border-purple-500 bg-purple-50 shadow-sm"
+                  : "border-purple-200 hover:border-purple-300 hover:bg-purple-50"
+              }`}
             >
-              {isSubmitting ? "Saving..." : "Continue"}
+              <span className="block text-base font-medium text-gray-900">
+                I’m a student
+              </span>
+              <span className="mt-1 block text-sm text-gray-600">
+                Connect with family and share campus life updates.
+              </span>
             </button>
-            <p className="text-xs text-gray-500">
-              You can update this later by contacting support.
-            </p>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => {
+                setSubmitError(null)
+                setSelectedUserType((current) => {
+                  const next = current === "community" ? null : "community"
+                  if (typeof window !== "undefined") {
+                    if (next) {
+                      window.localStorage.setItem(USER_TYPE_STORAGE_KEY, next)
+                    } else {
+                      window.localStorage.removeItem(USER_TYPE_STORAGE_KEY)
+                    }
+                  }
+                  if (next && needsUserType && userId && !isSubmitting) {
+                    void submitUserType()
+                  }
+                  return next
+                })
+              }}
+              className={`rounded-xl border px-4 py-3 text-left transition disabled:opacity-50 ${
+                selectedUserType === "community"
+                  ? "border-purple-500 bg-purple-50 shadow-sm"
+                  : "border-purple-200 hover:border-purple-300 hover:bg-purple-50"
+              }`}
+            >
+              <span className="block text-base font-medium text-gray-900">
+                I’m community
+              </span>
+              <span className="mt-1 block text-sm text-gray-600">
+                Coordinate updates and stay close with students.
+              </span>
+            </button>
           </div>
-        ) : null}
+          <p className="text-xs text-gray-500">
+            You can update this later by contacting support.
+          </p>
+        </div>
       </div>
     </div>
   )
