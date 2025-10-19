@@ -9,7 +9,7 @@ interface Location {
   id: string
   name: string
   city: string
-  country: string
+  distance: string
   image: string
   activeUsers: number
   posts: number
@@ -18,46 +18,46 @@ interface Location {
 const topLocations: Location[] = [
   {
     id: "1",
-    name: "Central Park",
-    city: "New York",
-    country: "USA",
-    image: "/diverse-group.png",
+    name: "Bob's Corn & Pumpkin Farm",
+    city: "Snohomish",
+    distance: "16 miles away",
+    image: "/pumpkin.png",
     activeUsers: 1234,
     posts: 5678,
   },
   {
     id: "2",
-    name: "Eiffel Tower",
-    city: "Paris",
-    country: "France",
-    image: "/vibrant-street-art.png",
+    name: "Seattle Japanese Garden",
+    city: "Seattle",
+    distance: "2 miles away",
+    image: "/garden.png",
     activeUsers: 2341,
     posts: 8901,
   },
   {
     id: "3",
-    name: "Tokyo Tower",
-    city: "Tokyo",
-    country: "Japan",
-    image: "/abstract-composition.png",
+    name: "T-Mobile Park",
+    city: "Seattle",
+    distance: "4.5 miles away",
+    image: "/mariners.jpg",
     activeUsers: 1567,
     posts: 4532,
   },
   {
     id: "4",
-    name: "Sydney Opera House",
-    city: "Sydney",
-    country: "Australia",
-    image: "/sunset-beach-tranquil.png",
+    name: "Pike Place",
+    city: "Downtown Seattle",
+    distance: "4.8 miles away",
+    image: "/pike.jpg",
     activeUsers: 987,
     posts: 3456,
   },
   {
     id: "5",
-    name: "Big Ben",
-    city: "London",
-    country: "UK",
-    image: "/cozy-cafe.png",
+    name: "Cafe Solstice",
+    city: "UDistrict",
+    distance: "0.4 miles away",
+    image: "/cafe.jpg",
     activeUsers: 1876,
     posts: 6789,
   },
@@ -98,7 +98,7 @@ export function TopLocationsSidebar() {
                   <PostTranslation text={location.name} componentType="top-locations" />
                 </p>
                 <p className="text-white/80 text-[10px]">
-                  <PostTranslation text={`${location.city}, ${location.country}`} componentType="top-locations" />
+                  <PostTranslation text={`${location.city}, ${location.distance}`} componentType="top-locations" />
                 </p>
               </div>
             </div>

@@ -38,7 +38,7 @@ export const mockUsers: User[] = [
     avatar: "/diverse-woman-smiling.png",
     bio: "Coffee lover and photographer",
     hometown: "Los Angeles, CA",
-    location: "San Francisco, CA",
+    location: "Seattle, WA",
     isInHomeCircle: true,
   },
   {
@@ -47,8 +47,8 @@ export const mockUsers: User[] = [
     displayName: "Emma Wilson",
     avatar: "/person-friendly.jpg",
     bio: "Designer & artist",
-    hometown: "Portland, OR",
-    location: "San Francisco, CA",
+    hometown: "Barcelona, Spain",
+    location: "Seattle, WA",
     isInHomeCircle: true,
   },
   {

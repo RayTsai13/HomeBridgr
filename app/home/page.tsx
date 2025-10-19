@@ -155,8 +155,8 @@ export default function HomePage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border relative",
                 currentView === "messages"
-                  ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700"
-                  : "bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 text-purple-400 dark:text-purple-300 border-purple-200 dark:border-gray-600"
+                  ? "bg-sky-100 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700"
+                  : "bg-sky-50 dark:bg-gray-700 hover:bg-sky-100 dark:hover:bg-gray-600 text-sky-400 dark:text-sky-300 border-sky-200 dark:border-gray-600"
               )}
             >
               <MessageCircle className="w-4 h-4" />
@@ -180,7 +180,7 @@ export default function HomePage() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-600 dark:text-sky-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-sky-200 dark:border-sky-800"
+              className="flex items-center gap-2 bg-sky-50 dark:bg-sky-600/30 hover:bg-sky-100 dark:hover:bg-sky-600/50 text-sky-400 dark:text-sky-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-sky-200 dark:border-sky-800"
             >
               <LogOut className="w-4 h-4" />
               Logout
