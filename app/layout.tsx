@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { GeistSans, GeistMono } from 'geist/font'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { TranslationProvider } from '@/lib/translation-context'
 
 const _geist = GeistSans;
 const _geistMono = GeistMono;
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
-        {children}
+        <TranslationProvider>
+          {children}
+        </TranslationProvider>
         <Analytics />
       </body>
     </html>
