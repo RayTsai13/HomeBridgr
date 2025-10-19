@@ -122,9 +122,9 @@ export default function HomePage() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-purple-300 via-sky-200 to-purple-300 dark:from-purple-900 dark:via-cyan-800 dark:to-purple-900">
       {/* Top Navigation */}
-      <nav className="bg-purple-400 dark:bg-gray-800/80 backdrop-blur-md border-b border-purple-100 dark:border-gray-700 sticky top-0 z-50 px-4 py-3">
+      <nav className="bg-violet-400 dark:bg-violet-800/80 backdrop-blur-md border-b border-violet-100 dark:border-violet-700 sticky top-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-100 to-purple-300 dark:from-purple-400 dark:to-violet-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-100 to-violet-300 dark:from-violet-400 dark:to-violet-400 bg-clip-text text-transparent">
             HomeBridgr
           </h1>
           
