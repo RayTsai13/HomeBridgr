@@ -13,13 +13,14 @@ import { DiscoverFeed } from "@/components/discover-feed"
 import { MessagingView } from "@/components/messaging-view"
 import { ProfileView } from "@/components/profile-view"
 import { PostComposer } from "@/components/post-composer"
+import { PostCard } from "@/components/post-card"
 import { SuggestedFriendsSidebar } from "@/components/suggested-friends-sidebar"
 import { TopLocationsSidebar } from "@/components/top-locations-sidebar"
 import { TopStoriesSidebar } from "@/components/top-stories-sidebar"
-import { Home, Compass, PlusCircle, MessageCircle, User, LogOut, Globe, Moon, Sun } from "lucide-react"
+import { Home, Compass, PlusCircle, MessageCircle, User, LogOut, Globe, Moon, Sun, GraduationCap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type View = "home" | "discover" | "messages" | "profile"
+type View = "home" | "discover" | "messages" | "profile" | "student"
 
 export default function HomePage() {
   const router = useRouter()
@@ -148,6 +149,21 @@ export default function HomePage() {
               <Globe className={`absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 dark:text-purple-400 pointer-events-none ${isTranslating ? 'animate-spin' : ''}`} />
             </div>
 
+            {/* Messages Button */}
+            <button
+              onClick={() => setCurrentView("messages")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border relative",
+                currentView === "messages"
+                  ? "bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700"
+                  : "bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 text-purple-400 dark:text-purple-300 border-purple-200 dark:border-gray-600"
+              )}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden md:inline">Messages</span>
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800" />
+            </button>
+
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
@@ -189,6 +205,60 @@ export default function HomePage() {
             {currentView === "discover" && <DiscoverFeed />}
             {currentView === "messages" && <MessagingView />}
             {currentView === "profile" && <ProfileView user={sessionUser} />}
+            {currentView === "student" && sessionUser && (
+              <div className="space-y-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+                  <h2 className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-2">Student Portal</h2>
+                  <p className="text-gray-600 dark:text-gray-300">Your academic journey and campus life</p>
+                </div>
+
+                <PostCard
+                  post={{
+                    id: "student-post-1",
+                    type: "user",
+                    author: {
+                      id: sessionUser.id,
+                      username: sessionUser.email?.split("@")[0] || "student",
+                      displayName: sessionUser.displayName || "Student",
+                      avatar: "/raymond.jpg",
+                      bio: "Student at HomeBridgr University",
+                      hometown: "Campus",
+                      location: "University Library"
+                    },
+                    content: "Just finished my research paper on cross-cultural communication! 📚 The library was packed but I found the perfect study spot. Coffee shops on campus are seriously overrated when you need to focus. #StudentLife #AcademicJourney",
+                    image: "/raymond_pic1.jpg",
+                    location: "University Library",
+                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+                    likes: 24,
+                    comments: 8,
+                    isLiked: false
+                  }}
+                />
+
+                <PostCard
+                  post={{
+                    id: "student-post-2",
+                    type: "user",
+                    author: {
+                      id: sessionUser.id,
+                      username: sessionUser.email?.split("@")[0] || "student",
+                      displayName: sessionUser.displayName || "Student",
+                      avatar: "/raymond.jpg",
+                      bio: "Student at HomeBridgr University",
+                      hometown: "Campus",
+                      location: "Campus Quad"
+                    },
+                    content: "Beautiful day on campus! 🌞 Took a break from studying to enjoy the sunshine. Sometimes you need to step away from the books and appreciate the moment. Meeting up with my study group later at the student center. Who else is enjoying this weather?",
+                    image: "/raymond_pic2.jpg",
+                    location: "Campus Quad",
+                    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+                    likes: 42,
+                    comments: 15,
+                    isLiked: true
+                  }}
+                />
+              </div>
+            )}
           </div>
           
           {/* Right Sidebar - Show on Home view */}
@@ -222,14 +292,14 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setCurrentView("discover")}
+            onClick={() => setCurrentView("student")}
             className={cn(
               "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all",
-              currentView === "discover" ? "text-purple-600 dark:text-purple-400" : "text-gray-500 dark:text-gray-400 hover:text-purple-500 dark:hover:text-purple-400"
+              currentView === "student" ? "text-purple-600 dark:text-purple-400" : "text-gray-500 dark:text-gray-400 hover:text-purple-500 dark:hover:text-purple-400"
             )}
           >
-            <Compass className="w-6 h-6" />
-            <span className="text-xs font-medium">Discover</span>
+            <GraduationCap className="w-6 h-6" />
+            <span className="text-xs font-medium">Student</span>
           </button>
 
           <button
@@ -240,15 +310,14 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setCurrentView("messages")}
+            onClick={() => setCurrentView("discover")}
             className={cn(
-              "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all relative",
-              currentView === "messages" ? "text-purple-600 dark:text-purple-400" : "text-gray-500 dark:text-gray-400 hover:text-purple-500 dark:hover:text-purple-400"
+              "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all",
+              currentView === "discover" ? "text-purple-600 dark:text-purple-400" : "text-gray-500 dark:text-gray-400 hover:text-purple-500 dark:hover:text-purple-400"
             )}
           >
-            <MessageCircle className="w-6 h-6" />
-            <span className="text-xs font-medium">Messages</span>
-            <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full" />
+            <Compass className="w-6 h-6" />
+            <span className="text-xs font-medium">Discover</span>
           </button>
 
           <button
