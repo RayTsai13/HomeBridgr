@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { AlertTriangle, Loader2 } from "lucide-react"
 import { PostCard } from "./post-card"
+import { Postcard } from "./postcard"
 import type { Post } from "@/lib/types"
 import { fetchPosts } from "@/lib/api/posts"
 import { mockPosts } from "@/lib/mock-data"
+import { createPostcardCollectionFromPosts } from "@/lib/api/collections"
+import { useToast } from "@/hooks/use-toast"
 
 interface HomeFeedProps {
   refreshToken?: number
@@ -33,6 +36,9 @@ export function HomeFeed({
   const [isFallback, setIsFallback] = useState(false)
 
   const mountedRef = useRef(false)
+  const lastSavedFingerprintRef = useRef<string | null>(null)
+  const { toast } = useToast()
+  const [isSavingPostcard, setIsSavingPostcard] = useState(false)
 
   const loadPosts = useCallback(async () => {
     if (!mountedRef.current || !viewerId) {
@@ -97,6 +103,41 @@ export function HomeFeed({
     void loadPosts()
   }, [loadPosts, refreshToken, viewerId])
 
+  // Auto-save a top-of-feed postcard collection once per unique set
+  useEffect(() => {
+    if (!isCommunityFeed) return
+    if (!mountedRef.current) return
+    if (isLoading) return
+    if (!viewerId) return
+    if (isFallback) return // don't persist sample data
+
+    const topImages: Post[] = []
+    for (const p of posts) {
+      if (p.type === "user" && p.image) {
+        topImages.push(p)
+        if (topImages.length === 4) break
+      }
+    }
+    if (topImages.length < 4) return
+
+    const fingerprint = [...topImages.map((p) => p.id)].sort().join("|")
+    if (lastSavedFingerprintRef.current === fingerprint) return
+
+    ;(async () => {
+      try {
+        await createPostcardCollectionFromPosts(viewerId, topImages, {
+          name: "Auto Postcard",
+          visibility: "private",
+          source: "auto",
+        })
+        lastSavedFingerprintRef.current = fingerprint
+      } catch (e) {
+        // non-fatal: log and continue
+        console.warn("Failed to persist postcard collection:", e)
+      }
+    })()
+  }, [posts, isLoading, viewerId, isFallback, isCommunityFeed])
+
   const handleRetry = () => {
     if (!mountedRef.current || !viewerId) return
     setFallbackMessage(null)
@@ -119,16 +160,67 @@ export function HomeFeed({
       ? "Start the conversation by sharing a moment with your community."
       : "Encourage students to share what's happening on campus.")
 
+  const containerMaxWidth = isCommunityFeed ? "max-w-4xl" : "max-w-2xl"
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className={`${containerMaxWidth} mx-auto px-4 py-6`}>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {headerTitle}
-        </h1>
-        <p className="text-gray-600">
-          {isLoading ? "Fetching the latest updates..." : headerSubtitle}
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {headerTitle}
+            </h1>
+            <p className="text-gray-600">
+              {isLoading ? "Fetching the latest updates..." : headerSubtitle}
+            </p>
+          </div>
+
+          {/* Save Postcard action */}
+          {isCommunityFeed && (
+          <button
+            onClick={async () => {
+              if (isLoading || !viewerId || isFallback) return
+              // collect current top four image posts
+              const topImages: Post[] = []
+              for (const p of posts) {
+                if (p.type === "user" && p.image) {
+                  topImages.push(p)
+                  if (topImages.length === 4) break
+                }
+              }
+              if (topImages.length < 4) {
+                toast({ title: "Not enough images", description: "Need 4 image posts to save a postcard." })
+                return
+              }
+              const fingerprint = [...topImages.map((p) => p.id)].sort().join("|")
+              if (lastSavedFingerprintRef.current === fingerprint) {
+                toast({ title: "Already saved", description: "This postcard is already in your collections." })
+                return
+              }
+              try {
+                setIsSavingPostcard(true)
+                await createPostcardCollectionFromPosts(viewerId, topImages, {
+                  name: "Saved Postcard",
+                  visibility: "private",
+                  source: "manual",
+                })
+                lastSavedFingerprintRef.current = fingerprint
+                toast({ title: "Postcard saved", description: "Added to your postcard collections." })
+              } catch (e: any) {
+                toast({ title: "Save failed", description: e?.message ?? "Could not save postcard." })
+              } finally {
+                setIsSavingPostcard(false)
+              }
+            }}
+            disabled={isLoading || !viewerId || isFallback || isSavingPostcard}
+            className="whitespace-nowrap inline-flex items-center rounded-lg border border-purple-300 bg-white px-3 py-2 text-sm font-semibold text-purple-700 transition-colors hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-disabled={isLoading || !viewerId || isFallback || isSavingPostcard}
+          >
+            {isSavingPostcard ? "Saving…" : "Save Postcard"}
+          </button>
+          )}
+        </div>
       </div>
 
       {fallbackMessage && (
@@ -168,9 +260,36 @@ export function HomeFeed({
       )}
 
       <div>
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
+        {(() => {
+          const list = posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))
+
+          if (!isCommunityFeed) {
+            return list
+          }
+
+          // For community feed, render postcard at the top when we have 4 image posts
+          const topImages: Post[] = []
+          for (const post of posts) {
+            if (post.type === "user" && post.image) {
+              topImages.push(post)
+              if (topImages.length === 4) break
+            }
+          }
+
+          if (topImages.length === 4) {
+            const key = `postcard-top-${topImages.map((p) => p.id).join("-")}`
+            return (
+              <>
+                <Postcard key={key} posts={topImages} />
+                {list}
+              </>
+            )
+          }
+
+          return list
+        })()}
       </div>
     </div>
   )

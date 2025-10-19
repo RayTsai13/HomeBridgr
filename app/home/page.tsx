@@ -247,7 +247,7 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="flex py-6 gap-2 pl-8 pr-8">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 flex gap-6 justify-center">
           {/* Left Sidebar - Show on Home and Discover views */}
           {(currentView === "home" || currentView === "discover") && (
             <aside className="hidden lg:block flex-shrink-0">
