@@ -170,7 +170,7 @@ export function ProfileView({ user }: ProfileViewProps) {
             className="w-24 h-24 mb-4 border-4 border-white rounded-full shadow-lg object-cover"
           />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{profileInfo.displayName}</h1>
-          <p className="text-purple-600 dark:text-lime-300 font-medium mb-3">@{profileInfo.username}</p>
+          <p className="text-purple-600 dark:text-sky-300 font-medium mb-3">@{profileInfo.username}</p>
           <p className="text-gray-700 dark:text-gray-300 mb-4 max-w-md">{profileInfo.bio}</p>
 
           {/* Location Info */}
@@ -236,11 +236,11 @@ export function ProfileView({ user }: ProfileViewProps) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 border-b border-purple-100 dark:border-gray-700">
-        <button className="flex-1 py-3 text-purple-600 dark:text-lime-300 font-semibold border-b-2 border-purple-600 dark:border-lime-300">Posts</button>
-        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-lime-300 transition-colors">
+        <button className="flex-1 py-3 text-purple-600 dark:text-sky-300 font-semibold border-b-2 border-purple-600 dark:border-sky-300">Posts</button>
+        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-sky-300 transition-colors">
           Liked
         </button>
-        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-lime-300 transition-colors">
+        <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-semibold hover:text-purple-600 dark:hover:text-sky-300 transition-colors">
           Saved
         </button>
       </div>
@@ -433,7 +433,7 @@ export function ProfileView({ user }: ProfileViewProps) {
               className="w-10 h-10 border-2 border-white rounded-full object-cover"
             />
           ))}
-          <button className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 bg-lime-300 dark:bg-gray-700 flex items-center justify-center text-lime-600 dark:text-lime-300 font-semibold text-sm hover:bg-lime-200 dark:hover:bg-gray-600 transition-colors">
+          <button className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 bg-sky-300 dark:bg-gray-700 flex items-center justify-center text-sky-600 dark:text-sky-300 font-semibold text-sm hover:bg-sky-200 dark:hover:bg-gray-600 transition-colors">
             +12
           </button>
         </div>

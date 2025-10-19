@@ -1,5 +1,7 @@
 "use client"
 
+/* -------   formatting for overall look background etc */
+
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser"
@@ -111,13 +113,13 @@ export default function HomePage() {
   if (!authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-pulse text-purple-600">Loading your feed...</div>
+        <div className="animate-pulse text-purple-500">Loading your feed...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-purple-200 via-purple-300 to-purple-200 dark:from-purple-900 dark:via-cyan-800 dark:to-purple-900">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-purple-300 via-sky-200 to-purple-300 dark:from-purple-900 dark:via-cyan-800 dark:to-purple-900">
       {/* Top Navigation */}
       <nav className="bg-purple-400 dark:bg-gray-800/80 backdrop-blur-md border-b border-purple-100 dark:border-gray-700 sticky top-0 z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -127,7 +129,7 @@ export default function HomePage() {
           
           <div className="flex items-center gap-4">
             {sessionUser?.email && (
-              <span className="hidden md:inline text-sm text-gray-600 dark:text-gray-300">
+              <span className="hidden md:inline text-sm text-sky-100 dark:text-sky-300">
                 Signed in as {sessionUser.email}
               </span>
             )}
@@ -137,19 +139,19 @@ export default function HomePage() {
                 value={currentLanguage}
                 onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
                 disabled={isTranslating}
-                className="appearance-none bg-purple-50 dark:bg-gray-700 text-purple-700 dark:text-purple-300 px-3 py-2 pr-8 rounded-lg text-sm font-medium border border-purple-200 dark:border-gray-600 hover:bg-purple-100 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="appearance-none bg-purple-50 dark:bg-sky-500 text-purple-500 dark:text-purple-300 px-3 py-2 pr-8 rounded-lg text-sm font-medium border border-purple-200 dark:border-gray-600 hover:bg-purple-100 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {Object.entries(supportedLanguages).map(([code, name]) => (
                   <option key={code} value={code}>{name}</option>
                 ))}
               </select>
-              <Globe className={`absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600 dark:text-purple-400 pointer-events-none ${isTranslating ? 'animate-spin' : ''}`} />
+              <Globe className={`absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 dark:text-purple-400 pointer-events-none ${isTranslating ? 'animate-spin' : ''}`} />
             </div>
 
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="flex items-center justify-center bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 text-purple-700 dark:text-purple-300 p-2 rounded-lg text-sm font-medium transition-colors border border-purple-200 dark:border-gray-600"
+              className="flex items-center justify-center bg-purple-50 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-gray-600 text-purple-400 dark:text-purple-300 p-2 rounded-lg text-sm font-medium transition-colors border border-purple-200 dark:border-gray-600"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? (
@@ -162,7 +164,7 @@ export default function HomePage() {
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-red-200 dark:border-red-800"
+              className="flex items-center gap-2 bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-sky-600 dark:text-sky-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-sky-200 dark:border-sky-800"
             >
               <LogOut className="w-4 h-4" />
               Logout
