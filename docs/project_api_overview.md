@@ -33,6 +33,10 @@ This document captures the current state of the HomeBridgr codebase so you can h
 | Route | Methods | Description | Key Dependencies |
 | --- | --- | --- | --- |
 | `/api/posts`<br/>`app/api/posts/route.ts` | `GET`, `POST` | Fetches and creates records in the `student_posts` table. `GET` joins against the `profiles` table to return author details. `POST` validates `caption`, `author_id`, optional `image_url`, inserts the row, and returns the created post. | `lib/supabase_admin.ts` (service client) |
+| `/api/posts/analyze`<br/>`app/api/posts/analyze/route.ts` | `POST` | Accepts `{ postId, options? }`, loads the post, runs `analyzeCaption`, and persists the structured analysis (`analysis_terms`, `analysis_raw_text`, `analysis_generated_at`) back to `student_posts`. | `lib/analysis.ts`, `lib/supabase_admin.ts` |
+| `/api/community/create`<br/>`app/api/community/create/route.ts` | `POST` | Creates a community row and the creator’s owner membership in `community_members`. Validates `name` and `creatorId`, inserts the records, and rolls back the community if membership creation fails. | `lib/supabase_admin.ts` |
+| `/api/community/post`<br/>`app/api/community/post/route.ts` | `POST` | Inserts a new community post record, requiring `communityId`, `authorId`, and at least one content field (`text`, `linkUrl`, `imageUrl`). Determines the `content_type` automatically when not provided. | `lib/supabase_admin.ts` |
+| `/api/collections`<br/>`app/api/collections/route.ts` | `POST` | Creates a postcard collection with `name` and `userId` (creator). Optional `description` and `visibility` values are trimmed and stored if supplied. | `lib/supabase_admin.ts` |
 | `/api/analysis`<br/>`app/api/analysis/route.ts` | `POST` | Accepts `{ message }`, validates input, and calls `lib/analysis.analyzeCaption`. Returns the AI result or surfaces configuration errors (501 when Bedrock credentials missing). | `lib/analysis.ts` (wraps Bedrock) |
 | `/api/bedrock`<br/>`app/api/bedrock/route.ts` | `POST` | Thin proxy to AWS Bedrock. Builds the Anthropic payload, merges defaults (model id/tokens), invokes `invokeBedrockModel`, and returns the raw JSON body. | `lib/bedrock.ts` |
 | `/api/translate`<br/>`app/api/translate/route.ts` | `POST` | Accepts `{ text, targetLanguage }`, constructs a Gemini prompt, and returns the translated text. | `@google/generative-ai`, `process.env.GEMINI_API_KEY` |
@@ -49,6 +53,10 @@ This document captures the current state of the HomeBridgr codebase so you can h
 
 - `__tests__/app/api/analysis/route.test.ts` – exercises validation and Bedrock failure paths.
 - `__tests__/app/api/posts/route.test.ts` – validates posting and fetching logic with mocked Supabase clients.
+- `__tests__/app/api/posts/analyze/route.test.ts` – covers the analysis endpoint, ensuring Supabase and Bedrock interactions are exercised via mocks.
+- `__tests__/app/api/community/create/route.test.ts` – verifies community creation, owner membership insertion, and cleanup when membership fails.
+- `__tests__/app/api/community/post/route.test.ts` – checks community post validation, inferred content type logic, and Supabase error handling.
+- `__tests__/app/api/collections/route.test.ts` – validates collection creation, required fields, and Supabase error propagation.
 
 ## Database Expectations (Supabase)
 
