@@ -120,7 +120,7 @@ export function TopLocationsSidebar() {
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                   savedIds.has(location.id)
                     ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    : "bg-lime-400 text-white hover:bg-lime-500"
+                    : "bg-sky-400 text-white hover:bg-sky-500"
                 }`}
               >
                 {savedIds.has(location.id) ? "Saved" : "Save"}
@@ -130,7 +130,7 @@ export function TopLocationsSidebar() {
         ))}
       </div>
 
-      <div className="mt-5 pt-5 border-t border-lime-200">
+      <div className="mt-5 pt-5 border-t border-sky-200">
         <p className="text-xs text-gray-400">
           Explore trending locations
         </p>

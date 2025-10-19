@@ -169,11 +169,11 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* gradient backgrounds */
+/* gradient backgrounds profile buttons*/
 .gradient-purple {
-  background: linear-gradient(135deg, rgb(139, 233, 250) 0%, rgb(204, 133, 255) 100%);
+  background: linear-gradient(135deg, rgb(147, 166, 228) 0%, rgb(218, 191, 241) 100%);
 }
 
 .gradient-purple-soft {
-  background: linear-gradient(135deg, rgb(243 237 255) 0%, rgb(156, 205, 255) 100%);
+  background: linear-gradient(135deg, rgb(173, 138, 244) 0%, rgb(188, 221, 255) 100%);
 }
