@@ -26,6 +26,7 @@ Source of author metadata when enriching posts.
 | `hometown` | text | Used as "From" metadata. |
 | `location` | text | Used as current location. |
 | `is_in_home_circle` | boolean | Optional flag parsed by the frontend. |
+| `user_type` | text | `"student"` or `"community"`; recorded during signup. |
 | `created_at` | timestamptz | Standard Supabase timestamp. |
 
 ### student_posts
