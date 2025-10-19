@@ -1,3 +1,4 @@
+// ...existing code...
 "use client"
 
 import Image from "next/image"
@@ -6,6 +7,16 @@ import { currentUser, mockPosts } from "@/lib/mock-data"
 
 export function ProfileView() {
   const userPosts = mockPosts.filter((post) => post.type === "user" && post.author.id === currentUser.id)
+
+  // ...existing code...
+  const galleryImages = [
+    "/raymond_pic1.jpg?height=300&width=300",
+    "/raymond_pic2.jpg?height=300&width=300",
+    "/raymond_pic3.jpg?height=300&width=300",
+    "/raymond_pic4.jpg?height=300&width=300",
+    "/raymond_pic5.jpg?height=300&width=300",
+    "/raymond_pic6.jpg?height=300&width=300",
+  ]
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -88,7 +99,7 @@ export function ProfileView() {
 
       {/* Posts Grid */}
       <div className="grid grid-cols-3 gap-2">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
+        {galleryImages.map((src, idx) => (
           <div
             key={i}
             className="relative aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-purple-200 to-violet-200"
@@ -130,3 +141,4 @@ export function ProfileView() {
     </div>
   )
 }
+// ...existing code...
