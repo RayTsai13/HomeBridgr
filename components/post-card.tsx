@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Share2, MapPin, ExternalLink } from "lucide-react
 import type { Post } from "@/lib/types"
 import { formatTimeAgo } from "@/lib/utils"
 import { useState } from "react"
+import { PostTranslation } from "./post-translation"
 
 interface PostCardProps {
   post: Post
@@ -40,7 +41,7 @@ export function PostCard({ post }: PostCardProps) {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-3xl px-8 py-6 shadow-2xl max-w-xs text-center">
               <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {post.content}
+                <PostTranslation text={post.content} componentType="post-card" />
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 catch up with {post.participants?.[0]?.displayName}
@@ -123,7 +124,9 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Content */}
       <div className="px-4 pb-3">
-        <p className="text-gray-800 dark:text-gray-200 leading-relaxed">{post.content}</p>
+        <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+          <PostTranslation text={post.content} componentType="post-card" />
+        </p>
       </div>
 
       {/* Image */}

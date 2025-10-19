@@ -23,6 +23,7 @@
     "bedrock:analyze": "tsx scripts/run_bedrock_analysis.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@tailwindcss/postcss": "^4.1.14",
     "@vercel/analytics": "^1.5.0",
     "autoprefixer": "^10.4.21",

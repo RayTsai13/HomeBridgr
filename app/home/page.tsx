@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "@/lib/translation-context"
 import { HomeFeed } from "@/components/home-feed"
 import { DiscoverFeed } from "@/components/discover-feed"
 import { MessagingView } from "@/components/messaging-view"
@@ -17,9 +18,9 @@ type View = "home" | "discover" | "messages" | "profile"
 
 export default function HomePage() {
   const router = useRouter()
+  const { currentLanguage, setLanguage, supportedLanguages, isTranslating } = useTranslation()
   const [currentView, setCurrentView] = useState<View>("home")
   const [showComposer, setShowComposer] = useState(false)
-  const [language, setLanguage] = useState("en")
   const [isDarkMode, setIsDarkMode] = useState(false)
 
   const handleLogout = () => {
@@ -44,19 +45,16 @@ export default function HomePage() {
             {/* Language Selector */}
             <div className="relative">
               <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="appearance-none bg-purple-50 dark:bg-gray-700 text-purple-700 dark:text-purple-300 px-3 py-2 pr-8 rounded-lg text-sm font-medium border border-purple-200 dark:border-gray-600 hover:bg-purple-100 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
+                value={currentLanguage}
+                onChange={(e) => setLanguage(e.target.value as any)}
+                disabled={isTranslating}
+                className="appearance-none bg-purple-50 dark:bg-gray-700 text-purple-700 dark:text-purple-300 px-3 py-2 pr-8 rounded-lg text-sm font-medium border border-purple-200 dark:border-gray-600 hover:bg-purple-100 dark:hover:bg-gray-600 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="fr">Français</option>
-                <option value="de">Deutsch</option>
-                <option value="zh">中文</option>
-                <option value="ja">日本語</option>
-                <option value="ar">العربية</option>
+                {Object.entries(supportedLanguages).map(([code, name]) => (
+                  <option key={code} value={code}>{name}</option>
+                ))}
               </select>
-              <Globe className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600 dark:text-purple-400 pointer-events-none" />
+              <Globe className={`absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-600 dark:text-purple-400 pointer-events-none ${isTranslating ? 'animate-spin' : ''}`} />
             </div>
 
             {/* Dark Mode Toggle */}
