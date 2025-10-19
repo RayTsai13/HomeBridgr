@@ -1,79 +1,89 @@
 # HomeBridgr Project & API Overview
 
-This document captures the current state of the HomeBridgr codebase so you can hand the context to another assistant (or future you) when planning the API layer. It walks from the 10,000‑ft view down to the implementation details, with an emphasis on what exists today inside `app/api` and the supporting libraries.
+This document captures the current HomeBridgr architecture from the UI shell down to the API layer so future contributors can quickly pick up where things stand.
 
 ## High-Level Architecture
 
-- **Framework**: Next.js 14 App Router with client/server components, Tailwind CSS, Geist fonts, and shadcn/ui primitives for UI.
-- **Auth & Data**: Supabase provides authentication, Postgres, and storage. The project uses:
-  - the Supabase browser client for session-aware components (`lib/supabase-browser.ts`);
-  - the Supabase service-role client for server-side CRUD (`lib/supabase_admin.ts`).
-- **AI Integrations**:
-  - AWS Bedrock (Anthropic Claude) via `lib/bedrock.ts`;
-  - Google Generative AI (Gemini) for translations via `app/api/translate`.
-- **Testing**: Vitest unit tests (`__tests__/`), especially for `/api/analysis`.
+- **Framework**: Next.js 14 App Router, React 18, Tailwind CSS v4, Geist fonts, lucide-react icons, and shadcn/ui primitives under `components/ui`.
+- **Auth & Data**: Supabase provides auth, Postgres, and storage.
+  - Client code builds a browser Supabase client (`lib/supabase-browser.ts`) for session checks and direct storage uploads.
+  - Server-side API routes rely on the service-role client (`lib/supabase_admin.ts`) for privileged CRUD.
+- **AI & Translation**:
+  - AWS Bedrock (Anthropic models) through `lib/bedrock.ts` and `lib/analysis.ts` for caption insights.
+  - Google Generative AI (Gemini 2.0 Flash) via `/api/translate` for optional UI translations.
+- **Fallback Data**: `lib/mock-data.ts` seeds local/mock experiences (discover feed, messaging, initial posts) when live data is unavailable.
+- **Testing**: Vitest (`vitest.config.ts`) with route and library level coverage in `__tests__/`.
 
-## Frontend Structure (Next.js App Router)
+## Frontend Structure (App Router)
 
-- `app/layout.tsx` – global layout, fonts, analytics.
-- `app/page.tsx` – landing redirect that routes users to `/home` or `/login` based on Supabase session.
-- `app/login/page.tsx` – Supabase Auth UI component (email/magic-link) for sign-in/up.
-- `app/home/page.tsx` – main authenticated shell (feeds, sidebars, messaging) guarded by Supabase session checks.
-- Global styling lives in `app/globals.css`; additional reusable components are under `components/`.
+- `app/layout.tsx` - wraps children with `<TranslationProvider>`, loads global styles, and adds Vercel Analytics.
+- `app/page.tsx` - client redirect that reads the Supabase session and routes to `/home` or `/login`.
+- `app/login/page.tsx` - themed Supabase Auth UI (email/magic-link) that redirects to `/home` on success.
+- `app/home/page.tsx` - authenticated shell with top navigation, language/dark-mode toggles, and bottom tab bar that swaps between:
+  - **Home view** - `<HomeFeed>` fetches `/api/posts`, falls back to `mockPosts`, and renders `<PostCard>` items which can call `/api/posts/analyze` for caption insights.
+  - **Discover view** - `<DiscoverFeed>` backed by `mockLocalPosts` plus `<TopLocationsSidebar>`.
+  - **Messages view** - `<MessagingView>` using `mockConversations`.
+  - **Profile view** - `<ProfileView>` bound to the signed-in `SessionUser`.
+  - **Post Composer** - modal `<PostComposer>` that uploads images to Supabase storage and persists posts through `/api/posts`.
 
-## Authentication Flow
+Shared providers and hooks live under `lib/` and `hooks/`, including the translation context/gating logic (`lib/translation-context.tsx`, `lib/use-translated-text.ts`) and viewport helpers.
 
-1. `/login` renders Supabase’s `<Auth>` widget. Sessions are managed client-side with `@supabase/ssr`’s browser client.
-2. Root and home pages call `supabase.auth.getSession()` to redirect unauthenticated users to `/login`.
-3. Server-side API routes use the service-role key (`SUPABASE_SERVICE_KEY`) via `lib/supabase_admin.ts`; keep this server-only.
-4. Environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, etc.) are defined in `.env.local` and must be mirrored in production.
+## Authentication & Session Flow
+
+1. Every client entry point (`app/page.tsx`, `app/home/page.tsx`, `app/login/page.tsx`) instantiates the browser Supabase client via `createSupabaseBrowserClient()`.
+2. `supabase.auth.getSession()` decides whether to redirect to `/login` or continue on `/home`.
+3. `/login` renders Supabase's `<Auth>` widget; auth state changes trigger a redirect back to `/home`.
+4. API routes run with the service-role key (`SUPABASE_SERVICE_KEY`) and must remain server-only.
+5. `PostComposer` also uses the browser client to upload images to the `student_uploads` bucket before posting metadata to `/api/posts`.
 
 ## Current API Surface (`app/api/*/route.ts`)
 
 | Route | Methods | Description | Key Dependencies |
 | --- | --- | --- | --- |
-| `/api/posts`<br/>`app/api/posts/route.ts` | `GET`, `POST` | Fetches and creates records in the `student_posts` table. `GET` joins against the `profiles` table to return author details. `POST` validates `caption`, `author_id`, optional `image_url`, inserts the row, and returns the created post. | `lib/supabase_admin.ts` (service client) |
-| `/api/posts/analyze`<br/>`app/api/posts/analyze/route.ts` | `POST` | Accepts `{ postId, options? }`, loads the post, runs `analyzeCaption`, and persists the structured analysis (`analysis_terms`, `analysis_raw_text`, `analysis_generated_at`) back to `student_posts`. | `lib/analysis.ts`, `lib/supabase_admin.ts` |
-| `/api/community/create`<br/>`app/api/community/create/route.ts` | `POST` | Creates a community row and the creator’s owner membership in `community_members`. Validates `name` and `creatorId`, inserts the records, and rolls back the community if membership creation fails. | `lib/supabase_admin.ts` |
-| `/api/community/post`<br/>`app/api/community/post/route.ts` | `POST` | Inserts a new community post record, requiring `communityId`, `authorId`, and at least one content field (`text`, `linkUrl`, `imageUrl`). Determines the `content_type` automatically when not provided. | `lib/supabase_admin.ts` |
-| `/api/collections`<br/>`app/api/collections/route.ts` | `POST` | Creates a postcard collection with `name` and `userId` (creator). Optional `description` and `visibility` values are trimmed and stored if supplied. | `lib/supabase_admin.ts` |
-| `/api/analysis`<br/>`app/api/analysis/route.ts` | `POST` | Accepts `{ message }`, validates input, and calls `lib/analysis.analyzeCaption`. Returns the AI result or surfaces configuration errors (501 when Bedrock credentials missing). | `lib/analysis.ts` (wraps Bedrock) |
-| `/api/bedrock`<br/>`app/api/bedrock/route.ts` | `POST` | Thin proxy to AWS Bedrock. Builds the Anthropic payload, merges defaults (model id/tokens), invokes `invokeBedrockModel`, and returns the raw JSON body. | `lib/bedrock.ts` |
-| `/api/translate`<br/>`app/api/translate/route.ts` | `POST` | Accepts `{ text, targetLanguage }`, constructs a Gemini prompt, and returns the translated text. | `@google/generative-ai`, `process.env.GEMINI_API_KEY` |
+| `/api/posts`<br/>`app/api/posts/route.ts` | `GET`, `POST` | `GET` returns `student_posts` ordered by `created_at` and enriches authors from `profiles`; `POST` validates `caption`/`author_id`, trims optional `image_url`, inserts the row, and returns the created post. | `lib/supabase_admin.ts` |
+| `/api/posts/analyze`<br/>`app/api/posts/analyze/route.ts` | `POST` | Accepts `{ postId, options? }`, fetches the post caption, runs `analyzeCaption`, stores `analysis_terms`, `analysis_raw_text`, `analysis_generated_at` back on `student_posts`, and returns both the updated row and AI payload. | `lib/analysis.ts`, `lib/supabase_admin.ts` |
+| `/api/analysis`<br/>`app/api/analysis/route.ts` | `POST` | Validates `{ message }`, calls `analyzeCaption`, and returns term explanations. Handles `CaptionAnalysisNotConfiguredError` (501) when Bedrock is not configured. | `lib/analysis.ts` |
+| `/api/community/create`<br/>`app/api/community/create/route.ts` | `POST` | Creates a community row and immediately inserts an owner membership in `community_members`; rolls back the community if the membership insert fails. | `lib/supabase_admin.ts` |
+| `/api/community/post`<br/>`app/api/community/post/route.ts` | `POST` | Creates community posts (`community_posts`), requiring `communityId`, `authorId`, and at least one of `text`, `linkUrl`, or `imageUrl`. Infers `content_type` when absent. | `lib/supabase_admin.ts` |
+| `/api/collections`<br/>`app/api/collections/route.ts` | `GET`, `POST` | `GET` expects `?userId`, returning that user's `postcard_collections`; `POST` trims `name`, `userId`, and optional description/visibility before inserting. | `lib/supabase_admin.ts` |
+| `/api/bedrock`<br/>`app/api/bedrock/route.ts` | `POST` | Thin proxy around `invokeBedrockModel` that accepts prompt settings, resolves the model id, calls Bedrock, and returns the raw body. | `lib/bedrock.ts` |
+| `/api/translate`<br/>`app/api/translate/route.ts` | `POST` | Sends `{ text, targetLanguage }` to Google Gemini (2.0 Flash) using the official SDK and returns the translated text. | `@google/generative-ai`, `process.env.GEMINI_API_KEY` |
 
 ### Supporting Libraries
 
-- `lib/analysis.ts` – exposes `analyzeCaption` and the `CaptionAnalysisNotConfiguredError` used by `/api/analysis`.
-- `lib/bedrock.ts` – handles AWS SDK setup and Bedrock invocation logic.
-- `lib/supabase_admin.ts` – service-role Supabase client for privileged queries.
-- `lib/supabase-browser.ts` – browser Supabase singleton used in client components.
-- `lib/translation.ts` & `lib/translation-context.tsx` – client-side helpers that call `/api/translate`.
+- `lib/analysis.ts` - builds Bedrock prompts, normalises responses, and surfaces configuration errors.
+- `lib/bedrock.ts` - caches the Bedrock runtime client and wraps `InvokeModel`.
+- `lib/api/posts.ts` & `lib/api/collections.ts` - browser helpers for calling the corresponding API routes and coercing records into typed objects.
+- `lib/supabase_admin.ts` & `lib/supabase-browser.ts` - service-role and browser Supabase clients.
+- `lib/translation.ts`, `lib/translation-context.tsx`, `lib/use-translated-text.ts` - translation gating logic used by `<PostTranslation>` and other components.
+- `lib/mock-data.ts`, `lib/utils.ts`, `hooks/use-mobile.ts`, `hooks/use-toast.ts` - shared UI data and helpers.
 
 ### Test Coverage
 
-- `__tests__/app/api/analysis/route.test.ts` – exercises validation and Bedrock failure paths.
-- `__tests__/app/api/posts/route.test.ts` – validates posting and fetching logic with mocked Supabase clients.
-- `__tests__/app/api/posts/analyze/route.test.ts` – covers the analysis endpoint, ensuring Supabase and Bedrock interactions are exercised via mocks.
-- `__tests__/app/api/community/create/route.test.ts` – verifies community creation, owner membership insertion, and cleanup when membership fails.
-- `__tests__/app/api/community/post/route.test.ts` – checks community post validation, inferred content type logic, and Supabase error handling.
-- `__tests__/app/api/collections/route.test.ts` – validates collection creation, required fields, and Supabase error propagation.
+- `__tests__/app/api/analysis/route.test.ts` - input validation and Bedrock error handling.
+- `__tests__/app/api/posts/route.test.ts` - GET/POST flows against mocked Supabase queries.
+- `__tests__/app/api/posts/analyze/route.test.ts` - verifies caption analysis persistence and error paths.
+- `__tests__/app/api/community/create/route.test.ts` - ensures owner membership creation and rollback logic.
+- `__tests__/app/api/community/post/route.test.ts` - validates required fields, inferred content type, and Supabase errors.
+- `__tests__/app/api/collections/route.test.ts` - covers both GET and POST workflows.
+- `__tests__/lib/analysis.test.ts` - unit tests prompt construction and Bedrock response parsing.
 
-## Database Expectations (Supabase)
+## Database & Storage Expectations (Supabase)
 
-Referenced tables from the codebase and docs:
+- `profiles` - author metadata joined by `/api/posts`.
+- `student_posts` - primary feed table including `analysis_terms`, `analysis_raw_text`, `analysis_generated_at` columns populated by `/api/posts/analyze`.
+- `communities` & `community_members` - created by `/api/community/create`.
+- `community_posts` - managed by `/api/community/post`.
+- `postcard_collections` - managed by `/api/collections`.
+- **Storage**: `student_uploads` bucket for post images uploaded directly from the browser.
 
-- `profiles` – User profile metadata keyed by `auth.users.id`.
-- `student_posts` – Core feed content used by `/api/posts`.
-- Future tables (per `docs/backend_diagram.md`): `community_posts`, `communities`, `community_members`, `postcard_collections`, `postcards`, `follows`.
-
-Row Level Security policies will be required once these tables are built; server-side routes currently rely on the service key but should eventually follow the principle of least privilege.
+Routes currently run with the service-role key, so introduce Row Level Security and scoped access before opening these endpoints publicly.
 
 ## Deployment & Configuration Notes
 
-- Redirect URLs for Supabase Auth must be set under **Authentication → URL Configuration** (local + production domains).
-- AWS Bedrock credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `BEDROCK_MODEL_ID`) and Gemini API key must exist in the runtime environment for `/api/analysis`, `/api/bedrock`, and `/api/translate`.
-- When deploying (Vercel, Netlify, etc.), export the same `.env.local` settings to the hosting platform.
+- Mirror `.env.local` variables (Supabase keys, Bedrock credentials, `GEMINI_API_KEY`) into your hosting provider.
+- Supabase Auth -> URL configuration must list the deployed domain(s) plus `http://localhost:3000` for local development.
+- AWS settings required by the Bedrock helpers: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` (or `AWS_BEDROCK_REGION`), and `BEDROCK_MODEL_ID`.
+- `npm run bedrock:analyze "sample caption"` is available for local smoke tests once Bedrock is configured.
 
----
-
-Use this overview as the baseline when reorganizing or extending the API. Add route files under `app/api/<feature>/route.ts`, keep shared logic in `lib/`, and update this document as new endpoints or services come online.***
+Keep this document up to date as new routes or integrations land so downstream contributors don't have to rediscover the architecture.

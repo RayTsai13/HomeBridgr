@@ -37,6 +37,6 @@ BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 - Optionally, hit the running dev server: `curl -X POST http://localhost:3000/api/analysis ...`
 
 ## 5. Troubleshooting
-- **401/403 errors** → verify IAM permissions and that the region and model match what you enabled.
-- **Configuration error (HTTP 501)** → confirm `BEDROCK_MODEL_ID` and region env vars are set.
-- **Invalid JSON errors** → tighten the prompt in `lib/analysis.ts` so the model cannot deviate from the required JSON schema.
+- **401/403 errors** -> verify IAM permissions and that the region and model match what you enabled.
+- **Configuration error (HTTP 501)** -> confirm `BEDROCK_MODEL_ID` and region env vars are set.
+- **Invalid JSON errors** -> tighten the prompt in `lib/analysis.ts` so the model cannot deviate from the required JSON schema.
