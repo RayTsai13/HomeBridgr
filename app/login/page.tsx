@@ -28,7 +28,7 @@ export default function LoginPage() {
       setSelectedUserType(stored)
     }
   }, [])
-  const submitUserType = async () => {
+  const submitUserType = useCallback(async () => {
     if (!userId || !selectedUserType) {
       return
     }
@@ -65,7 +65,7 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false)
     }
-  }
+  }, [router, selectedUserType, userId])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -137,7 +137,7 @@ export default function LoginPage() {
         setSubmitError(null)
       }
     },
-    [router, isSubmitting, selectedUserType]
+    [router, isSubmitting, selectedUserType, submitUserType]
   )
 
   useEffect(() => {
@@ -232,10 +232,10 @@ export default function LoginPage() {
         ) : null}
         <div className="bg-white border border-purple-100 shadow-sm rounded-2xl p-6 space-y-4">
           <h2 className="text-xl font-semibold text-gray-900">
-            Choose how you'll use HomeBridgr
+            Choose how you&apos;ll use HomeBridgr
           </h2>
           <p className="text-sm text-gray-600">
-            Pick one. We'll save it automatically after you sign in.
+            Pick one. We&apos;ll save it automatically after you sign in.
           </p>
           {submitError ? (
             <div className="space-y-2">

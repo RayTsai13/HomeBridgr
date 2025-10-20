@@ -87,6 +87,9 @@ function buildSegments(text: string, terms: InsightTerm[]): Segment[] {
 export function CaptionWithInsights({ text, terms }: CaptionWithInsightsProps) {
   const { currentLanguage } = useTranslation()
 
+  // Always compute segments before any early return so hooks are not conditional.
+  const segments = useMemo(() => buildSegments(text, terms), [text, terms])
+
   // If not English, prefer a full translation to ensure readability.
   // Highlighting relies on English terms and won't align post-translation.
   if (currentLanguage !== 'en') {
@@ -96,8 +99,6 @@ export function CaptionWithInsights({ text, terms }: CaptionWithInsightsProps) {
       </p>
     )
   }
-
-  const segments = useMemo(() => buildSegments(text, terms), [text, terms])
 
   return (
     <p className="leading-relaxed text-gray-800 dark:text-gray-200">
