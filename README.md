@@ -50,6 +50,17 @@ In the project directory, you can run:
 - `npm run type-check` - Runs TypeScript compiler to check for type errors
 - `npm run bedrock:analyze -- "<caption>"` - Calls the Bedrock-backed caption analyzer from the command line
 
+## Vercel Build Notes
+
+Tailwind CSS v4 uses Lightning CSS under the hood, which ships native binaries as optional dependencies. On Vercel, ensure optional dependencies are installed so the native module is available on Linux:
+
+- Project Settings → Build & Development Settings → Install Command: `npm install --include=optional`
+- Alternatively, add environment variable `NPM_CONFIG_INCLUDE=optional` for your project.
+
+Without this, builds may fail with errors like:
+
+`Error: Cannot find module '../lightningcss.linux-x64-gnu.node'`
+
 ## AWS Bedrock Integration
 
 See `docs/bedrock_setup.md` for step-by-step instructions on enabling Bedrock and wiring credentials.
