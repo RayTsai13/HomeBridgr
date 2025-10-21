@@ -17,9 +17,10 @@ import { fetchCollections, createCollection } from "@/lib/api/collections"
 
 interface ProfileViewProps {
   user: SessionUser | null
+  isDemo?: boolean
 }
 
-export function ProfileView({ user }: ProfileViewProps) {
+export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
   const [collections, setCollections] = useState<Collection[]>([])
   const [collectionsLoading, setCollectionsLoading] = useState(false)
   const [collectionsError, setCollectionsError] = useState<string | null>(null)
@@ -71,9 +72,9 @@ export function ProfileView({ user }: ProfileViewProps) {
   ]
 
   useEffect(() => {
-    if (!user?.id) {
+    if (isDemo || !user?.id) {
       setCollections([])
-      setCollectionsError("Sign in to create postcard collections.")
+      setCollectionsError(isDemo ? "Demo mode is read-only. Sign in to manage your postcard collections." : "Sign in to create postcard collections.")
       return
     }
 
@@ -109,7 +110,7 @@ export function ProfileView({ user }: ProfileViewProps) {
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [isDemo, user?.id])
 
   const handleCreateCollection = async (event: React.FormEvent) => {
     event.preventDefault()

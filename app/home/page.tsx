@@ -18,6 +18,8 @@ import { TopLocationsSidebar } from "./_components/top-locations-sidebar"
 import { TopStoriesSidebar } from "./_components/top-stories-sidebar"
 import { Home, Compass, PlusCircle, MessageCircle, User, LogOut, Globe, Moon, Sun, GraduationCap } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { DEMO_MODE_QUERY_PARAM, DEMO_MODE_STORAGE_KEY } from "@/lib/demo-mode"
 
 type View = "home" | "discover" | "messages" | "profile" | "student"
 
@@ -31,14 +33,42 @@ export default function HomePage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
   const [feedRefreshToken, setFeedRefreshToken] = useState(0)
+  const [isDemoMode, setIsDemoMode] = useState(false)
+  const [demoChecked, setDemoChecked] = useState(false)
+  const { toast } = useToast()
   const USER_TYPE_STORAGE_KEY = "hb_selected_user_type"
 
   useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const demoParam = new URLSearchParams(window.location.search).get(DEMO_MODE_QUERY_PARAM)
+
+    if (demoParam === "1") {
+      setIsDemoMode(true)
+      window.localStorage.setItem(DEMO_MODE_STORAGE_KEY, "1")
+    } else if (demoParam === "0") {
+      setIsDemoMode(false)
+      window.localStorage.removeItem(DEMO_MODE_STORAGE_KEY)
+    } else {
+      const stored = window.localStorage.getItem(DEMO_MODE_STORAGE_KEY)
+      setIsDemoMode(stored === "1")
+    }
+
+    setDemoChecked(true)
+  }, [])
+
+  useEffect(() => {
+    if (!demoChecked) return
+
+    if (isDemoMode) {
+      setAuthChecked(true)
+      setSessionUser(null)
+      return
+    }
+
     let isMounted = true
 
     const enforceAuth = async () => {
-      // If redirected here from a magic link or OAuth provider,
-      // exchange the URL code/hash for a session before checking it.
       if (typeof window !== "undefined") {
         const url = new URL(window.location.href)
         const hasCodeParam = !!url.searchParams.get("code")
@@ -49,9 +79,6 @@ export default function HomePage() {
             window.location.href
           )
           if (error) {
-            // Non-fatal: we’ll still proceed to check the current session
-            // so users get routed appropriately.
-            // eslint-disable-next-line no-console
             console.error("Auth code exchange failed", error)
           }
         }
@@ -65,6 +92,11 @@ export default function HomePage() {
         router.replace("/login")
         return
       }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(DEMO_MODE_STORAGE_KEY)
+      }
+      setIsDemoMode(false)
 
       if (isMounted) {
         const metadata = (session.user.user_metadata ?? {}) as Record<string, unknown>
@@ -86,7 +118,7 @@ export default function HomePage() {
       }
     }
 
-    enforceAuth()
+    void enforceAuth()
 
     const {
       data: { subscription },
@@ -95,6 +127,11 @@ export default function HomePage() {
         router.replace("/login")
         setSessionUser(null)
       } else {
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(DEMO_MODE_STORAGE_KEY)
+        }
+        setIsDemoMode(false)
+
         const metadata = (session.user.user_metadata ?? {}) as Record<string, unknown>
         const displayName =
           (typeof metadata.full_name === "string" && metadata.full_name) ||
@@ -118,10 +155,12 @@ export default function HomePage() {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [router, supabase])
+  }, [demoChecked, isDemoMode, router, supabase])
 
   // Apply any pending role selection saved before/at login
   useEffect(() => {
+    if (isDemoMode) return
+
     const applyPendingRole = async () => {
       if (!sessionUser?.id || typeof window === "undefined") return
       const pending = window.localStorage.getItem(USER_TYPE_STORAGE_KEY)
@@ -154,9 +193,18 @@ export default function HomePage() {
     }
 
     void applyPendingRole()
-  }, [sessionUser])
+  }, [isDemoMode, sessionUser])
 
   const handleLogout = async () => {
+    if (isDemoMode) {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(DEMO_MODE_STORAGE_KEY)
+      }
+      setIsDemoMode(false)
+      router.replace(`/login?${DEMO_MODE_QUERY_PARAM}=0`)
+      return
+    }
+
     await supabase.auth.signOut()
     setSessionUser(null)
     router.replace("/login")
@@ -185,10 +233,16 @@ export default function HomePage() {
           </h1>
           
           <div className="flex items-center gap-4">
-            {sessionUser?.email && (
+            {isDemoMode ? (
               <span className="hidden md:inline text-sm text-sky-100 dark:text-sky-300">
-                Signed in as {sessionUser.email}
+                Demo mode — exploring sample data
               </span>
+            ) : (
+              sessionUser?.email && (
+                <span className="hidden md:inline text-sm text-sky-100 dark:text-sky-300">
+                  Signed in as {sessionUser.email}
+                </span>
+              )
             )}
             {/* Language Selector */}
             <div className="relative">
@@ -239,7 +293,7 @@ export default function HomePage() {
               className="flex items-center gap-2 bg-sky-50 dark:bg-sky-600/30 hover:bg-sky-100 dark:hover:bg-sky-600/50 text-sky-400 dark:text-sky-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-sky-200 dark:border-sky-800"
             >
               <LogOut className="w-4 h-4" />
-              Logout
+              {isDemoMode ? "Exit Demo" : "Logout"}
             </button>
           </div>
         </div>
@@ -247,6 +301,24 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
+        {isDemoMode && (
+          <div className="mx-auto mt-4 w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-3 rounded-3xl border border-dashed border-purple-200 bg-white/70 p-5 text-sm text-purple-700 shadow-sm dark:border-purple-600/60 dark:bg-gray-900/70 dark:text-purple-200">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-semibold">You&apos;re viewing the HomeBridgr demo.</p>
+                <button
+                  onClick={() => handleLogout()}
+                  className="inline-flex items-center justify-center rounded-full border border-purple-300 px-3 py-1 text-xs font-semibold text-purple-600 transition hover:border-purple-400 hover:bg-purple-50 dark:border-purple-500 dark:text-purple-200 dark:hover:bg-purple-800/40"
+                >
+                  Return to login
+                </button>
+              </div>
+              <p>
+                Sample data showcases community posts, discover cards, and messaging. Sign in to see your real feeds, save postcards, and share updates.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 flex gap-6 justify-center">
           {/* Left Sidebar - Show on Home and Discover views */}
           {(currentView === "home" || currentView === "discover") && (
@@ -262,13 +334,19 @@ export default function HomePage() {
                 key="community-feed"
                 refreshToken={feedRefreshToken}
                 userType="community"
-                viewerId={sessionUser?.id ?? null}
+                viewerId={isDemoMode ? null : sessionUser?.id ?? null}
+                isDemo={isDemoMode}
               />
             )}
             {currentView === "discover" && <DiscoverFeed />}
             {currentView === "messages" && <MessagingView />}
-            {currentView === "profile" && <ProfileView user={sessionUser} />}
+            {currentView === "profile" && <ProfileView user={sessionUser} isDemo={isDemoMode} />}
             {currentView === "student" && (
+              isDemoMode ? (
+                <div className="rounded-3xl border border-dashed border-purple-200 bg-white/70 px-6 py-12 text-center text-purple-700 dark:text-purple-200">
+                  Sign in to explore student-only updates curated for your community.
+                </div>
+              ) : (
               <HomeFeed
                 key="student-feed"
                 refreshToken={feedRefreshToken}
@@ -279,6 +357,7 @@ export default function HomePage() {
                 emptyTitle="No student posts yet"
                 emptyMessage="Encourage students to share what's happening on campus."
               />
+              )
             )}
           </div>
           
@@ -313,7 +392,17 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setCurrentView("student")}
+            onClick={() => {
+              if (isDemoMode) {
+                toast({
+                  title: "Sign in to view student updates",
+                  description: "Create an account to see student-only posts from your community.",
+                })
+                return
+              }
+              setCurrentView("student")
+            }}
+            aria-disabled={isDemoMode}
             className={cn(
               "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all",
               currentView === "student" ? "text-purple-600 dark:text-purple-400" : "text-gray-500 dark:text-gray-400 hover:text-purple-500 dark:hover:text-purple-400"
@@ -324,7 +413,17 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={() => setShowComposer(true)}
+            onClick={() => {
+              if (isDemoMode) {
+                toast({
+                  title: "Sign in to share a post",
+                  description: "The demo is read-only. Log in to publish updates and upload photos.",
+                })
+                return
+              }
+              setShowComposer(true)
+            }}
+            aria-disabled={isDemoMode}
             className="flex items-center justify-center w-14 h-14 -mt-6 rounded-full bg-gradient-to-r from-violet-500 to-violet-600 shadow-lg hover:shadow-xl transition-all"
           >
             <PlusCircle className="w-7 h-7 text-white" />
@@ -355,7 +454,7 @@ export default function HomePage() {
       </nav>
 
       {/* Post Composer Modal */}
-      {showComposer && (
+      {!isDemoMode && showComposer && (
         <PostComposer
           author={sessionUser}
           onClose={() => setShowComposer(false)}

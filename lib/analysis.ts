@@ -45,7 +45,7 @@ type BedrockResponseShape = {
 
 function buildPrompt(caption: string): string {
   return [
-    "You help  by clarifying student social media captions.",
+    "You help by clarifying student social media captions.",
     "Identify slang, acronyms, cultural references, or locations that could confuse someone who is not of the culture or area.",
     "List each confusing term alongside a brief 1-2 sentence explanation that references the caption context.",
     "Respond with strict JSON matching this schema:",

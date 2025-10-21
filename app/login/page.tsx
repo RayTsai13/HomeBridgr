@@ -6,6 +6,7 @@ import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import type { Session } from "@supabase/supabase-js"
 import { createSupabaseBrowserClient } from "@/lib/supabase-browser"
+import { DEMO_MODE_STORAGE_KEY, DEMO_MODE_QUERY_PARAM } from "@/lib/demo-mode"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -73,6 +74,13 @@ export default function LoginPage() {
     }
   }, [])
 
+  const handleDemoTour = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(DEMO_MODE_STORAGE_KEY, "1")
+    }
+    router.push(`/home?${DEMO_MODE_QUERY_PARAM}=1`)
+  }, [router])
+
   const handleSession = useCallback(
     async (session: Session | null) => {
       if (!session?.user) {
@@ -85,6 +93,9 @@ export default function LoginPage() {
       }
 
       setUserId(session.user.id)
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(DEMO_MODE_STORAGE_KEY)
+      }
 
       try {
         const response = await fetch(
@@ -199,6 +210,13 @@ export default function LoginPage() {
             }}
           />
         </div>
+        <button
+          type="button"
+          onClick={handleDemoTour}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-dashed border-purple-300 bg-white/70 px-4 py-3 text-sm font-semibold text-purple-600 transition hover:border-purple-400 hover:bg-white"
+        >
+          Explore a live demo
+        </button>
         {profileError ? (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4 space-y-3">
             <p className="text-sm">{profileError}</p>

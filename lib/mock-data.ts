@@ -1,5 +1,17 @@
 import type { User, Post, Message, Conversation } from "./types"
 
+const createDemoAnalysis = (
+  terms: Array<{ term: string; explanation: string }>,
+  generatedAt: string
+) => {
+  const normalised = terms.map((t) => ({ ...t }))
+  return {
+    analysisTerms: normalised,
+    analysisGeneratedAt: new Date(generatedAt),
+    analysisRawText: JSON.stringify({ terms: normalised }),
+  }
+}
+
 export const currentUser: User = {
   id: "1",
   username: "test_user",
@@ -102,6 +114,26 @@ export const mockPosts: Post[] = [
     likes: 24,
     comments: 5,
     isLiked: false,
+    ...createDemoAnalysis(
+      [
+        {
+          term: "Aurora borealis",
+          explanation:
+            "Natural light display caused by solar particles; seeing it this far south is rare and exciting.",
+        },
+        {
+          term: "Alki Beach",
+          explanation:
+            "Popular waterfront spot in West Seattle known for skyline views—it sets the scene for the photo.",
+        },
+        {
+          term: "Stunning",
+          explanation:
+            "Used here to emphasise how captivating the colours were in person.",
+        },
+      ],
+      "2024-10-20T03:15:00.000Z"
+    ),
   },
   {
     id: "3",
@@ -114,6 +146,26 @@ export const mockPosts: Post[] = [
     likes: 42,
     comments: 12,
     isLiked: true,
+    ...createDemoAnalysis(
+      [
+        {
+          term: "Modelled",
+          explanation:
+            "Artist slang for taking inspiration; the spelling hints at a UK influence but here just means 'inspired by'.",
+        },
+        {
+          term: "Michaelangelo",
+          explanation:
+            "Refers to Renaissance master Michelangelo; the playful misspelling shows excitement more than precision.",
+        },
+        {
+          term: "Art piece",
+          explanation:
+            "Casual shorthand for artwork; signals this is a personal, possibly mixed-media project.",
+        },
+      ],
+      "2024-10-19T22:05:00.000Z"
+    ),
   },
   {
     id: "7",
@@ -143,6 +195,26 @@ export const mockPosts: Post[] = [
     likes: 18,
     comments: 3,
     isLiked: false,
+    ...createDemoAnalysis(
+      [
+        {
+          term: "Coffee and coding",
+          explanation:
+            "Common phrase among developers meaning they are working from a café with caffeine as fuel.",
+        },
+        {
+          term: "Blue Bottle Coffee",
+          explanation:
+            "Specialty café chain originating in Oakland; name signals a trendy, quiet workspace vibe.",
+        },
+        {
+          term: "Morning combo",
+          explanation:
+            "Slang for a go-to routine that kicks off the day—in this case, caffeine plus laptop time.",
+        },
+      ],
+      "2024-10-19T16:45:00.000Z"
+    ),
   },
 ]
 
@@ -158,6 +230,26 @@ export const mockLocalPosts: Post[] = [
     likes: 31,
     comments: 8,
     isLiked: false,
+    ...createDemoAnalysis(
+      [
+        {
+          term: "Down to",
+          explanation:
+            "Casual invite meaning 'interested in' or 'willing to join'; common West Coast slang.",
+        },
+        {
+          term: "Carpool",
+          explanation:
+            "Sharing a ride to split costs; here it implies coordinating with other students.",
+        },
+        {
+          term: "UDistrict",
+          explanation:
+            "Seattle shorthand for the University District, signalling the poster is near UW campus.",
+        },
+      ],
+      "2024-10-20T04:30:00.000Z"
+    ),
   },
   {
     id: "6",
@@ -170,6 +262,26 @@ export const mockLocalPosts: Post[] = [
     likes: 15,
     comments: 6,
     isLiked: false,
+    ...createDemoAnalysis(
+      [
+        {
+          term: "Super fun",
+          explanation:
+            "Casual emphasis showing enthusiasm; signals the hike was especially enjoyable.",
+        },
+        {
+          term: "This weekend",
+          explanation:
+            "Means 'recently'—usually the Saturday or Sunday that just passed.",
+        },
+        {
+          term: "Not too far from Seattle",
+          explanation:
+            "Reassures friends the trail is within easy driving distance, encouraging them to join next time.",
+        },
+      ],
+      "2024-10-20T01:10:00.000Z"
+    ),
   },
 ]
 

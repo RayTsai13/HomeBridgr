@@ -18,6 +18,7 @@ interface HomeFeedProps {
   emptyTitle?: string
   emptyMessage?: string
   viewerId?: string | null
+  isDemo?: boolean
 }
 
 export function HomeFeed({
@@ -28,6 +29,7 @@ export function HomeFeed({
   emptyTitle,
   emptyMessage,
   viewerId = null,
+  isDemo = false,
 }: HomeFeedProps) {
   const isCommunityFeed = userType === "community"
   const [posts, setPosts] = useState<Post[]>(isCommunityFeed ? mockPosts : [])
@@ -41,7 +43,7 @@ export function HomeFeed({
   const [isSavingPostcard, setIsSavingPostcard] = useState(false)
 
   const loadPosts = useCallback(async () => {
-    if (!mountedRef.current || !viewerId) {
+    if (!mountedRef.current || !viewerId || isDemo) {
       return
     }
 
@@ -86,22 +88,33 @@ export function HomeFeed({
         setIsLoading(false)
       }
     }
-  }, [isCommunityFeed, userType, viewerId])
+  }, [isCommunityFeed, isDemo, userType, viewerId])
 
   useEffect(() => {
     mountedRef.current = true
-    if (viewerId) {
+    if (isDemo) {
+      if (isCommunityFeed) {
+        setPosts(mockPosts)
+        setIsFallback(true)
+        setFallbackMessage("This is the guided HomeBridgr demo with curated community posts.")
+      } else {
+        setPosts([])
+        setIsFallback(false)
+        setFallbackMessage("Student posts are available once you sign in.")
+      }
+      setIsLoading(false)
+    } else if (viewerId) {
       void loadPosts()
     }
     return () => {
       mountedRef.current = false
     }
-  }, [loadPosts, viewerId])
+  }, [isCommunityFeed, isDemo, loadPosts, viewerId])
 
   useEffect(() => {
-    if (!mountedRef.current || !viewerId) return
+    if (!mountedRef.current || !viewerId || isDemo) return
     void loadPosts()
-  }, [loadPosts, refreshToken, viewerId])
+  }, [isDemo, loadPosts, refreshToken, viewerId])
 
   // Auto-save a top-of-feed postcard collection once per unique set
   useEffect(() => {
@@ -110,6 +123,7 @@ export function HomeFeed({
     if (isLoading) return
     if (!viewerId) return
     if (isFallback) return // don't persist sample data
+    if (isDemo) return
 
     const topImages: Post[] = []
     for (const p of posts) {
@@ -136,10 +150,10 @@ export function HomeFeed({
         console.warn("Failed to persist postcard collection:", e)
       }
     })()
-  }, [posts, isLoading, viewerId, isFallback, isCommunityFeed])
+  }, [isCommunityFeed, isDemo, isFallback, isLoading, posts, viewerId])
 
   const handleRetry = () => {
-    if (!mountedRef.current || !viewerId) return
+    if (!mountedRef.current || !viewerId || isDemo) return
     setFallbackMessage(null)
     setIsFallback(false)
     void loadPosts()
@@ -150,17 +164,26 @@ export function HomeFeed({
   const headerSubtitle =
     subtitle ??
     (isCommunityFeed
-      ? "Updates from your circle"
+      ? isDemo
+        ? "Demo updates from the HomeBridgr sample community"
+        : "Updates from your circle"
       : "Latest updates shared by students")
   const emptyStateTitle =
     emptyTitle ?? (isCommunityFeed ? "No posts yet" : "No student posts yet")
   const emptyStateMessage =
     emptyMessage ??
     (isCommunityFeed
-      ? "Start the conversation by sharing a moment with your community."
+      ? isDemo
+        ? "Sign in to see fresh moments from your own family and community circle."
+        : "Start the conversation by sharing a moment with your community."
       : "Encourage students to share what's happening on campus.")
 
   const containerMaxWidth = isCommunityFeed ? "max-w-4xl" : "max-w-2xl"
+  const fallbackTitle = isDemo
+    ? "You're viewing sample posts"
+    : isFallback
+      ? "Showing sample posts"
+      : "We're having trouble loading posts"
 
   return (
     <div className={`${containerMaxWidth} mx-auto px-4 py-6`}>
@@ -178,47 +201,53 @@ export function HomeFeed({
 
           {/* Save Postcard action */}
           {isCommunityFeed && (
-          <button
-            onClick={async () => {
-              if (isLoading || !viewerId || isFallback) return
-              // collect current top four image posts
-              const topImages: Post[] = []
-              for (const p of posts) {
-                if (p.type === "user" && p.image) {
-                  topImages.push(p)
-                  if (topImages.length === 4) break
+            <button
+              onClick={async () => {
+                if (isDemo) {
+                  toast({
+                    title: "Sign in to save postcards",
+                    description: "Create an account to capture collections from your real communities.",
+                  })
+                  return
                 }
-              }
-              if (topImages.length < 4) {
-                toast({ title: "Not enough images", description: "Need 4 image posts to save a postcard." })
-                return
-              }
-              const fingerprint = [...topImages.map((p) => p.id)].sort().join("|")
-              if (lastSavedFingerprintRef.current === fingerprint) {
-                toast({ title: "Already saved", description: "This postcard is already in your collections." })
-                return
-              }
-              try {
-                setIsSavingPostcard(true)
-                await createPostcardCollectionFromPosts(viewerId, topImages, {
-                  name: "Saved Postcard",
-                  visibility: "private",
-                  source: "manual",
-                })
-                lastSavedFingerprintRef.current = fingerprint
-                toast({ title: "Postcard saved", description: "Added to your postcard collections." })
-              } catch (e: any) {
-                toast({ title: "Save failed", description: e?.message ?? "Could not save postcard." })
-              } finally {
-                setIsSavingPostcard(false)
-              }
-            }}
-            disabled={isLoading || !viewerId || isFallback || isSavingPostcard}
-            className="whitespace-nowrap inline-flex items-center rounded-lg border border-purple-300 bg-white px-3 py-2 text-sm font-semibold text-purple-700 transition-colors hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-disabled={isLoading || !viewerId || isFallback || isSavingPostcard}
-          >
-            {isSavingPostcard ? "Saving…" : "Save Postcard"}
-          </button>
+                if (isLoading || !viewerId || isFallback) return
+                const topImages: Post[] = []
+                for (const p of posts) {
+                  if (p.type === "user" && p.image) {
+                    topImages.push(p)
+                    if (topImages.length === 4) break
+                  }
+                }
+                if (topImages.length < 4) {
+                  toast({ title: "Not enough images", description: "Need 4 image posts to save a postcard." })
+                  return
+                }
+                const fingerprint = [...topImages.map((p) => p.id)].sort().join("|")
+                if (lastSavedFingerprintRef.current === fingerprint) {
+                  toast({ title: "Already saved", description: "This postcard is already in your collections." })
+                  return
+                }
+                try {
+                  setIsSavingPostcard(true)
+                  await createPostcardCollectionFromPosts(viewerId, topImages, {
+                    name: "Saved Postcard",
+                    visibility: "private",
+                    source: "manual",
+                  })
+                  lastSavedFingerprintRef.current = fingerprint
+                  toast({ title: "Postcard saved", description: "Added to your postcard collections." })
+                } catch (e: any) {
+                  toast({ title: "Save failed", description: e?.message ?? "Could not save postcard." })
+                } finally {
+                  setIsSavingPostcard(false)
+                }
+              }}
+              disabled={isDemo || isLoading || !viewerId || isFallback || isSavingPostcard}
+              className="whitespace-nowrap inline-flex items-center rounded-lg border border-purple-300 bg-white px-3 py-2 text-sm font-semibold text-purple-700 transition-colors hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-disabled={isDemo || isLoading || !viewerId || isFallback || isSavingPostcard}
+            >
+              {isSavingPostcard ? "Saving…" : "Save Postcard"}
+            </button>
           )}
         </div>
       </div>
@@ -227,18 +256,16 @@ export function HomeFeed({
         <div className="mb-4 flex items-start gap-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="flex-1">
-            <p className="font-semibold">
-              {isFallback
-                ? "Showing sample posts"
-                : "We're having trouble loading posts"}
-            </p>
+            <p className="font-semibold">{fallbackTitle}</p>
             <p className="mt-1 text-yellow-600">{fallbackMessage}</p>
-            <button
-              onClick={handleRetry}
-              className="mt-3 inline-flex items-center rounded-lg border border-yellow-300 bg-white px-3 py-1.5 text-xs font-semibold text-yellow-700 transition-colors hover:bg-yellow-100"
-            >
-              Try again
-            </button>
+            {!isDemo && (
+              <button
+                onClick={handleRetry}
+                className="mt-3 inline-flex items-center rounded-lg border border-yellow-300 bg-white px-3 py-1.5 text-xs font-semibold text-yellow-700 transition-colors hover:bg-yellow-100"
+              >
+                Try again
+              </button>
+            )}
           </div>
         </div>
       )}
