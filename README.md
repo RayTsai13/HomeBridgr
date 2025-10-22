@@ -56,6 +56,7 @@ Tailwind CSS v4 uses Lightning CSS under the hood, which ships native binaries a
 
 - Project Settings → Build & Development Settings → Install Command: `npm install --include=optional`
 - Alternatively, add environment variable `NPM_CONFIG_INCLUDE=optional` for your project.
+- Keep the optional dependency `lightningcss-linux-x64-gnu@1.30.1` in `package.json`; removing it breaks Linux builds.
 
 Without this, builds may fail with errors like:
 

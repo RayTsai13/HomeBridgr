@@ -154,6 +154,7 @@ Mirror these values in your hosting provider’s environment settings. If you as
 
 ## Deployment Notes
 - Recommended target: Vercel. Ensure optional dependencies are installed (`npm install --include=optional` or set `NPM_CONFIG_INCLUDE=optional`) so Tailwind’s Lightning CSS binary is available.
+- Keep the optional dependency `lightningcss-linux-x64-gnu@1.30.1` in `package.json`; its lockfile metadata guarantees the Linux binary is present during Vercel builds.
 - Sync `.env` values (Supabase keys, AWS credentials, Gemini key) into the deployment environment.
 - Update Supabase Auth → Redirect URLs to include both local dev (`http://localhost:3000`) and deployed domains.
 - Introduce Row Level Security before exposing service-role backed routes beyond trusted environments.
