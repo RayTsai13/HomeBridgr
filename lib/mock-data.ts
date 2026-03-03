@@ -1,3 +1,5 @@
+// TODO: CLEANUP - this file is deprecated in favor of real seeded Supabase data.
+// Remove once guest mode is fully confirmed working with seeded posts.
 import type { User, Post, Message, Conversation } from "./types"
 
 const createDemoAnalysis = (

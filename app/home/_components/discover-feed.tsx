@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { MapPin, Loader2, AlertTriangle } from "lucide-react"
 import { PostCard } from "./post-card"
-import { mockLocalPosts } from "@/lib/mock-data"
 import { fetchPosts } from "@/lib/api/posts"
 import type { Post } from "@/lib/types"
 
@@ -15,18 +14,17 @@ const DISTANCE_LIMITS: Record<string, number> = {
 
 interface DiscoverFeedProps {
   viewerId?: string | null
-  isDemo?: boolean
+  isGuest?: boolean
 }
 
-export function DiscoverFeed({ viewerId = null, isDemo = false }: DiscoverFeedProps) {
+export function DiscoverFeed({ viewerId = null, isGuest = false }: DiscoverFeedProps) {
   const [distance, setDistance] = useState("5 miles")
   const [posts, setPosts] = useState<Post[]>([])
-  const [isLoading, setIsLoading] = useState(!isDemo)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const mountedRef = useRef(false)
 
   const loadPosts = useCallback(async () => {
-    if (!viewerId) return
     setIsLoading(true)
     setError(null)
     try {
@@ -51,14 +49,9 @@ export function DiscoverFeed({ viewerId = null, isDemo = false }: DiscoverFeedPr
 
   useEffect(() => {
     mountedRef.current = true
-    if (isDemo) {
-      setPosts(mockLocalPosts)
-      setIsLoading(false)
-    } else {
-      void loadPosts()
-    }
+    void loadPosts()
     return () => { mountedRef.current = false }
-  }, [isDemo, loadPosts])
+  }, [loadPosts])
 
   const limit = DISTANCE_LIMITS[distance] ?? Infinity
   const visiblePosts = isFinite(limit) ? posts.slice(0, limit) : posts

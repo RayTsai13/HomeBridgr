@@ -84,10 +84,76 @@ export async function GET(request: Request) {
   const viewerId = sanitiseString(url.searchParams.get("viewerId"));
 
   if (!viewerId) {
-    return NextResponse.json(
-      { error: "`viewerId` query parameter is required." },
-      { status: 400 }
+    // Guest path: return all recent posts with author profiles, no community scoping
+    const { data: guestPosts, error: guestError } = await supabaseAdmin
+      .from(POSTS_TABLE)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (guestError) {
+      return NextResponse.json(
+        { error: "Failed to fetch posts", details: guestError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!guestPosts?.length) {
+      return NextResponse.json({ posts: [] }, { status: 200 });
+    }
+
+    const guestAuthorIds = Array.from(
+      new Set(
+        guestPosts
+          .map((post) => post.author_id)
+          .filter((id): id is string => Boolean(id))
+      )
     );
+
+    let guestAuthors: Record<string, unknown>[] = [];
+
+    if (guestAuthorIds.length > 0) {
+      const { data: authorsData, error: authorsError } = await supabaseAdmin
+        .from(PROFILES_TABLE)
+        .select("*")
+        .in("id", guestAuthorIds);
+
+      if (authorsError) {
+        return NextResponse.json(
+          { error: "Failed to fetch post authors", details: authorsError.message },
+          { status: 500 }
+        );
+      }
+
+      guestAuthors = authorsData ?? [];
+    }
+
+    const guestAuthorById = new Map(
+      guestAuthors
+        .map((author) => {
+          const id = author && typeof author === "object" ? author["id"] : null;
+          return typeof id === "string" ? ([id, author] as const) : null;
+        })
+        .filter((entry): entry is readonly [string, Record<string, unknown>] =>
+          Array.isArray(entry)
+        )
+    );
+
+    const guestPostsWithAuthors = guestPosts
+      .filter((post) => {
+        if (typeof post.author_id !== "string") return false;
+        const author = guestAuthorById.get(post.author_id);
+        if (!author) return false;
+        const userType = extractAuthorUserType(author);
+        if (requestedUserType === "student") return userType === "student";
+        return userType !== "student";
+      })
+      .map((post) => ({
+        ...post,
+        author: post.author_id ? guestAuthorById.get(post.author_id) ?? null : null,
+      }));
+
+    return NextResponse.json({ posts: guestPostsWithAuthors }, { status: 200 });
   }
 
   const viewerCommunityIds = new Set<string>();

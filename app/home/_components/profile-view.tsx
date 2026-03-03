@@ -22,10 +22,10 @@ import { useToast } from "@/hooks/use-toast"
 
 interface ProfileViewProps {
   user: SessionUser | null
-  isDemo?: boolean
+  isGuest?: boolean
 }
 
-export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
+export function ProfileView({ user, isGuest = false }: ProfileViewProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
   const { toast } = useToast()
 
@@ -65,19 +65,10 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
     }
   }, [user, localDisplayName])
 
-  const demoGalleryImages = [
-    "/raymond_pic1.jpg?height=300&width=300",
-    "/raymond_pic2.jpg?height=300&width=300",
-    "/raymond_pic3.jpg?height=300&width=300",
-    "/raymond_pic4.jpg?height=300&width=300",
-    "/raymond_pic5.jpg?height=300&width=300",
-    "/raymond_pic6.jpg?height=300&width=300",
-  ]
-
   // Load real user posts
   useEffect(() => {
     mountedRef.current = true
-    if (isDemo || !user?.id) return
+    if (isGuest || !user?.id) return
 
     const load = async () => {
       setPostsLoading(true)
@@ -105,14 +96,14 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
 
     void load()
     return () => { mountedRef.current = false }
-  }, [isDemo, user?.id])
+  }, [isGuest, user?.id])
 
-  const postCount = isDemo ? 0 : realPosts.length
+  const postCount = isGuest ? 0 : realPosts.length
 
   useEffect(() => {
-    if (isDemo || !user?.id) {
+    if (isGuest || !user?.id) {
       setCollections([])
-      setCollectionsError(isDemo ? "Demo mode is read-only. Sign in to manage your postcard collections." : "Sign in to create postcard collections.")
+      setCollectionsError(isGuest ? "Sign in to manage your postcard collections." : "Sign in to create postcard collections.")
       return
     }
 
@@ -148,7 +139,7 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
     return () => {
       cancelled = true
     }
-  }, [isDemo, user?.id])
+  }, [isGuest, user?.id])
 
   const handleCreateCollection = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -367,22 +358,10 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
       </div>
 
       {/* Posts Grid */}
-      {isDemo ? (
-        <div className="grid grid-cols-3 gap-2">
-          {demoGalleryImages.map((src, idx) => (
-            <div
-              key={idx}
-              className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-200 to-violet-200"
-            >
-              <Image
-                src={src}
-                alt={`Post ${idx}`}
-                fill
-                className="object-cover transition-transform duration-300 hover:scale-110"
-                sizes="(max-width: 768px) 33vw, 200px"
-              />
-            </div>
-          ))}
+      {isGuest ? (
+        <div className="rounded-3xl border border-dashed border-purple-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+          <p className="text-sm font-medium">Sign in to see your posts</p>
+          <p className="mt-1 text-xs">Create an account to share moments with your community.</p>
         </div>
       ) : postsLoading ? (
         <div className="flex justify-center py-8">

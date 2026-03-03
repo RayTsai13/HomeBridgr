@@ -21,7 +21,9 @@
     "test": "vitest",
     "type-check": "tsc --noEmit",
     "bedrock:analyze": "tsx scripts/run_bedrock_analysis.ts",
-    "seed:posts": "tsx scripts/seed_student_posts.ts"
+    "seed:posts": "tsx scripts/seed_student_posts.ts",
+    "seed:users": "tsx scripts/seed_users.ts",
+    "seed:posts:demo": "tsx scripts/seed_student_posts.ts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.913.0",
