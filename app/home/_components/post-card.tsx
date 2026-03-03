@@ -1,23 +1,43 @@
 "use client"
 
 import Image from "next/image"
-import { Heart, MessageCircle, Share2, MapPin, ExternalLink } from "lucide-react"
+import { Heart, MessageCircle, Share2, MapPin, ExternalLink, Send, Loader2 } from "lucide-react"
 import type { Post } from "@/lib/types"
 import { formatTimeAgo } from "@/lib/utils"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { PostTranslation } from "./post-translation"
 import { CaptionWithInsights } from "./caption-with-insights"
 import { analyzePost, analyzeCaptionAdhoc } from "@/lib/api/posts"
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser"
+import { useToast } from "@/hooks/use-toast"
+
+type PostComment = {
+  id: string
+  content: string
+  created_at: string
+  author_id: string
+  profiles: { display_name: string | null; avatar_url: string | null } | null
+}
 
 interface PostCardProps {
   post: Post
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
+  const { toast } = useToast()
+
   const [isLiked, setIsLiked] = useState(post.isLiked || false)
   const [likes, setLikes] = useState(post.likes)
   const [analysisTerms, setAnalysisTerms] = useState(post.analysisTerms ?? null)
   const autoRequestedRef = useRef(false)
+
+  const [showComments, setShowComments] = useState(false)
+  const [comments, setComments] = useState<PostComment[]>([])
+  const [commentInput, setCommentInput] = useState("")
+  const [isLoadingComments, setIsLoadingComments] = useState(false)
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [localCommentCount, setLocalCommentCount] = useState(post.comments)
 
   useEffect(() => {
     setAnalysisTerms(post.analysisTerms ?? null)
@@ -56,6 +76,75 @@ export function PostCard({ post }: PostCardProps) {
   const handleLike = () => {
     setIsLiked(!isLiked)
     setLikes(isLiked ? likes - 1 : likes + 1)
+  }
+
+  const loadComments = useCallback(async () => {
+    setIsLoadingComments(true)
+    try {
+      const res = await fetch(`/api/posts/${post.id}/comments`)
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setComments(data.comments ?? [])
+    } catch {
+      // silently fail — table may not exist yet
+    } finally {
+      setIsLoadingComments(false)
+    }
+  }, [post.id])
+
+  const handleToggleComments = useCallback(() => {
+    const next = !showComments
+    setShowComments(next)
+    if (next && comments.length === 0 && !isLoadingComments) {
+      void loadComments()
+    }
+  }, [showComments, comments.length, isLoadingComments, loadComments])
+
+  const handleSubmitComment = async () => {
+    const content = commentInput.trim()
+    if (!content || isSubmittingComment) return
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      toast({ description: "Sign in to leave a comment.", variant: "destructive" })
+      return
+    }
+
+    setIsSubmittingComment(true)
+    try {
+      const res = await fetch(`/api/posts/${post.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ author_id: user.id, content }),
+      })
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setComments((prev) => [...prev, data.comment])
+      setLocalCommentCount((c) => c + 1)
+      setCommentInput("")
+    } catch {
+      toast({ description: "Failed to post comment.", variant: "destructive" })
+    } finally {
+      setIsSubmittingComment(false)
+    }
+  }
+
+  const handleShare = async () => {
+    const shareText = `${post.author.displayName}: ${post.content}`
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ text: shareText, title: "HomeBridgr" })
+      } catch {
+        // user cancelled the share sheet — no action needed
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText)
+        toast({ description: "Post copied to clipboard." })
+      } catch {
+        toast({ description: "Could not copy post.", variant: "destructive" })
+      }
+    }
   }
 
   if (post.type === "message-summary") {
@@ -201,14 +290,83 @@ export function PostCard({ post }: PostCardProps) {
           <Heart className={`w-7 h-7 ${isLiked ? "fill-purple-600 text-purple-600 dark:fill-purple-400 dark:text-purple-400" : ""}`} />
           <span className="text-base font-medium">{likes}</span>
         </button>
-        <button className="flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-          <MessageCircle className="w-7 h-7" />
-          <span className="text-base font-medium">{post.comments}</span>
+        <button
+          onClick={handleToggleComments}
+          className={`flex items-center gap-3 transition-colors ${showComments ? "text-purple-600 dark:text-purple-400" : "text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"}`}
+        >
+          <MessageCircle className={`w-7 h-7 ${showComments ? "fill-purple-100 dark:fill-purple-900" : ""}`} />
+          <span className="text-base font-medium">{localCommentCount}</span>
         </button>
-        <button className="flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors ml-auto">
+        <button
+          onClick={() => void handleShare()}
+          className="flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors ml-auto"
+        >
           <Share2 className="w-7 h-7" />
         </button>
       </div>
+
+      {/* Comments Section */}
+      {showComments && (
+        <div className="px-6 pb-5 border-t border-purple-100 dark:border-gray-700">
+          <div className="space-y-3 pt-4">
+            {isLoadingComments && (
+              <div className="flex justify-center py-3">
+                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              </div>
+            )}
+            {!isLoadingComments && comments.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-2">
+                No comments yet. Be the first!
+              </p>
+            )}
+            {comments.map((comment) => (
+              <div key={comment.id} className="flex items-start gap-3">
+                <Image
+                  src={comment.profiles?.avatar_url || "/placeholder.svg"}
+                  alt={comment.profiles?.display_name || "User"}
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
+                />
+                <div className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-2xl px-4 py-2">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {comment.profiles?.display_name || "Anonymous"}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{comment.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Comment input */}
+          <div className="flex items-center gap-2 mt-4">
+            <input
+              type="text"
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault()
+                  void handleSubmitComment()
+                }
+              }}
+              placeholder="Write a comment…"
+              className="flex-1 bg-gray-50 dark:bg-gray-700 rounded-full px-4 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder:text-gray-400 outline-none border border-gray-200 dark:border-gray-600 focus:border-purple-300 dark:focus:border-purple-500 transition-colors"
+            />
+            <button
+              onClick={() => void handleSubmitComment()}
+              disabled={!commentInput.trim() || isSubmittingComment}
+              className="w-9 h-9 rounded-full bg-purple-600 hover:bg-purple-700 disabled:opacity-40 flex items-center justify-center transition-colors flex-shrink-0"
+            >
+              {isSubmittingComment ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <Send className="w-4 h-4 text-white" />
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

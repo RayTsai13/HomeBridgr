@@ -39,3 +39,7 @@ next-env.d.ts
 # python virtual environment (if any)
 .venv/
 __pycache__/
+
+# Claude AI files
+.claude/
+CLAUDE.md
