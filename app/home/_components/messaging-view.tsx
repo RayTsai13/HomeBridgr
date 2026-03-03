@@ -13,7 +13,6 @@ export function MessagingView() {
 
   const handleSendMessage = () => {
     if (!messageInput.trim()) return
-    console.log("[v0] Sending message:", messageInput)
     setMessageInput("")
   }
 

@@ -5,9 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const { text, targetLanguage } = await request.json()
     
-    console.log('Translation request:', { text, targetLanguage })
-    console.log('API Key exists:', !!process.env.GEMINI_API_KEY)
-
     if (!text || !targetLanguage) {
       return NextResponse.json(
         { error: 'Text and target language are required' },

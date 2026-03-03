@@ -338,7 +338,7 @@ export default function HomePage() {
                 isDemo={isDemoMode}
               />
             )}
-            {currentView === "discover" && <DiscoverFeed />}
+            {currentView === "discover" && <DiscoverFeed viewerId={isDemoMode ? null : sessionUser?.id ?? null} isDemo={isDemoMode} />}
             {currentView === "messages" && <MessagingView />}
             {currentView === "profile" && <ProfileView user={sessionUser} isDemo={isDemoMode} />}
             {currentView === "student" && (

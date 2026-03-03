@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import {
   Settings,
@@ -10,10 +10,15 @@ import {
   FolderPlus,
   Loader2,
   AlertCircle,
+  Check,
+  X,
 } from "lucide-react"
-import { currentUser, mockPosts } from "@/lib/mock-data"
-import type { SessionUser, Collection } from "@/lib/types"
+import { currentUser } from "@/lib/mock-data"
+import type { SessionUser, Collection, Post } from "@/lib/types"
 import { fetchCollections, createCollection } from "@/lib/api/collections"
+import { fetchPosts } from "@/lib/api/posts"
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser"
+import { useToast } from "@/hooks/use-toast"
 
 interface ProfileViewProps {
   user: SessionUser | null
@@ -21,6 +26,9 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
+  const { toast } = useToast()
+
   const [collections, setCollections] = useState<Collection[]>([])
   const [collectionsLoading, setCollectionsLoading] = useState(false)
   const [collectionsError, setCollectionsError] = useState<string | null>(null)
@@ -31,17 +39,21 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
   const [descriptionInput, setDescriptionInput] = useState("")
   const [visibilityInput, setVisibilityInput] = useState("private")
 
+  // Edit profile state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
+  const [localDisplayName, setLocalDisplayName] = useState<string | null>(null)
+
+  // Real user posts for gallery
+  const [realPosts, setRealPosts] = useState<Post[]>([])
+  const [postsLoading, setPostsLoading] = useState(false)
+  const mountedRef = useRef(false)
+
   const profileInfo = useMemo(() => {
     const fallback = currentUser
-    // Prefer an explicit display name; otherwise use the fallback mock name
-    // rather than deriving from the email local-part. This keeps the header
-    // showing a friendly name like "Wei Chen" while still showing the actual
-    // username/handle below.
-    const displayName = user?.displayName ?? fallback.displayName
-    const username =
-      user?.email?.split("@")[0] ??
-      fallback.username
-
+    const displayName = localDisplayName ?? user?.displayName ?? fallback.displayName
+    const username = user?.email?.split("@")[0] ?? fallback.username
     return {
       displayName,
       username,
@@ -51,18 +63,9 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
       hometown: fallback.hometown,
       location: fallback.location,
     }
-  }, [user])
+  }, [user, localDisplayName])
 
-  const userPosts = useMemo(
-    () =>
-      mockPosts.filter(
-        (post) =>
-          post.type === "user" && post.author.id === currentUser.id
-      ),
-    []
-  )
-
-  const galleryImages = [
+  const demoGalleryImages = [
     "/raymond_pic1.jpg?height=300&width=300",
     "/raymond_pic2.jpg?height=300&width=300",
     "/raymond_pic3.jpg?height=300&width=300",
@@ -70,6 +73,41 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
     "/raymond_pic5.jpg?height=300&width=300",
     "/raymond_pic6.jpg?height=300&width=300",
   ]
+
+  // Load real user posts
+  useEffect(() => {
+    mountedRef.current = true
+    if (isDemo || !user?.id) return
+
+    const load = async () => {
+      setPostsLoading(true)
+      try {
+        const [community, student] = await Promise.all([
+          fetchPosts("community", user.id).catch(() => [] as Post[]),
+          fetchPosts("student", user.id).catch(() => [] as Post[]),
+        ])
+        if (!mountedRef.current) return
+        const seen = new Set<string>()
+        const mine = [...community, ...student]
+          .filter((p) => {
+            if (p.author.id !== user.id || seen.has(p.id)) return false
+            seen.add(p.id)
+            return true
+          })
+          .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        setRealPosts(mine)
+      } catch {
+        // silently fail — gallery stays empty
+      } finally {
+        if (mountedRef.current) setPostsLoading(false)
+      }
+    }
+
+    void load()
+    return () => { mountedRef.current = false }
+  }, [isDemo, user?.id])
+
+  const postCount = isDemo ? 0 : realPosts.length
 
   useEffect(() => {
     if (isDemo || !user?.id) {
@@ -152,12 +190,54 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
     }
   }
 
+  const handleEditToggle = () => {
+    if (!isEditing) {
+      setEditName(profileInfo.displayName ?? "")
+    }
+    setIsEditing((v) => !v)
+  }
+
+  const handleSaveProfile = async () => {
+    if (!user?.id || isSaving) return
+    const trimmed = editName.trim()
+    if (!trimmed) return
+
+    setIsSaving(true)
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: trimmed },
+      })
+      if (error) throw error
+      setLocalDisplayName(trimmed)
+      setIsEditing(false)
+      toast({ description: "Profile updated." })
+    } catch {
+      toast({ description: "Could not save changes.", variant: "destructive" })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleShareProfile = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : ""
+    try {
+      await navigator.clipboard.writeText(url)
+      toast({ description: "Profile link copied to clipboard." })
+    } catch {
+      toast({ description: "Could not copy link.", variant: "destructive" })
+    }
+  }
+
   return (
     <div className="max-w-2xl px-4 py-6 mx-auto">
       {/* Header with gradient background */}
       <div className="gradient-purple-soft dark:bg-gradient-to-br dark:from-cyan-900 dark:to-cyan-700 rounded-3xl p-6 mb-6 relative overflow-hidden">
         <div className="absolute top-4 right-4">
-          <button className="flex items-center justify-center w-10 h-10 transition-colors rounded-full bg-white/80 dark:bg-gray-700/80 hover:bg-white dark:hover:bg-gray-600">
+          <button
+            onClick={handleEditToggle}
+            className="flex items-center justify-center w-10 h-10 transition-colors rounded-full bg-white/80 dark:bg-gray-700/80 hover:bg-white dark:hover:bg-gray-600"
+            aria-label="Edit profile"
+          >
             <Settings className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </button>
         </div>
@@ -171,9 +251,42 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
             height={96}
             className="w-24 h-24 mb-4 border-4 border-white rounded-full shadow-lg object-cover"
           />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{profileInfo.displayName}</h1>
-          <p className="text-purple-600 dark:text-sky-300 font-medium mb-3">@{profileInfo.username}</p>
-          <p className="text-gray-700 dark:text-gray-300 mb-4 max-w-md">{profileInfo.bio}</p>
+          {isEditing ? (
+            <div className="w-full max-w-xs mb-3">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleSaveProfile() }}
+                placeholder="Display name"
+                className="w-full text-center text-lg font-bold rounded-xl border border-purple-300 bg-white/90 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 mb-2"
+                autoFocus
+              />
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => void handleSaveProfile()}
+                  disabled={isSaving || !editName.trim()}
+                  className="flex items-center gap-1 rounded-full bg-purple-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  Save
+                </button>
+                <button
+                  onClick={handleEditToggle}
+                  className="flex items-center gap-1 rounded-full bg-white/70 px-4 py-1.5 text-sm font-semibold text-gray-700 hover:bg-white transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{profileInfo.displayName}</h1>
+              <p className="text-purple-600 dark:text-sky-300 font-medium mb-3">@{profileInfo.username}</p>
+              <p className="text-gray-700 dark:text-gray-300 mb-4 max-w-md">{profileInfo.bio}</p>
+            </>
+          )}
 
           {/* Location Info */}
           <div className="flex items-center gap-4 mb-4 text-gray-600 dark:text-gray-300">
@@ -200,7 +313,7 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
           <div className="flex items-center gap-6">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {userPosts.length}
+                {postCount}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Posts
@@ -228,10 +341,16 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
 
       {/* Action Buttons */}
       <div className="flex gap-3 mb-6">
-        <button className="flex-1 py-3 font-semibold text-white transition-all rounded-2xl gradient-purple hover:shadow-lg">
+        <button
+          onClick={handleEditToggle}
+          className="flex-1 py-3 font-semibold text-white transition-all rounded-2xl gradient-purple hover:shadow-lg"
+        >
           Edit Profile
         </button>
-        <button className="flex-1 py-3 font-semibold transition-colors rounded-2xl bg-white dark:bg-gray-800 border-2 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-700">
+        <button
+          onClick={() => void handleShareProfile()}
+          className="flex-1 py-3 font-semibold transition-colors rounded-2xl bg-white dark:bg-gray-800 border-2 border-purple-200 dark:border-gray-600 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-gray-700"
+        >
           Share Profile
         </button>
       </div>
@@ -248,22 +367,55 @@ export function ProfileView({ user, isDemo = false }: ProfileViewProps) {
       </div>
 
       {/* Posts Grid */}
-      <div className="grid grid-cols-3 gap-2">
-        {galleryImages.map((src, idx) => (
-          <div
-            key={idx}
-            className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-200 to-violet-200"
-          >
-            <Image
-              src={src}
-              alt={`Post ${idx}`}
-              fill
-              className="object-cover transition-transform duration-300 hover:scale-110"
-              sizes="(max-width: 768px) 33vw, 200px"
-            />
-          </div>
-        ))}
-      </div>
+      {isDemo ? (
+        <div className="grid grid-cols-3 gap-2">
+          {demoGalleryImages.map((src, idx) => (
+            <div
+              key={idx}
+              className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-200 to-violet-200"
+            >
+              <Image
+                src={src}
+                alt={`Post ${idx}`}
+                fill
+                className="object-cover transition-transform duration-300 hover:scale-110"
+                sizes="(max-width: 768px) 33vw, 200px"
+              />
+            </div>
+          ))}
+        </div>
+      ) : postsLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        </div>
+      ) : realPosts.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-purple-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+          <p className="text-sm">No posts yet. Share your first moment!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {realPosts.map((post, idx) => (
+            <div
+              key={post.id}
+              className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-200 to-violet-200"
+            >
+              {post.image ? (
+                <Image
+                  src={post.image}
+                  alt={`Post ${idx + 1}`}
+                  fill
+                  className="object-cover transition-transform duration-300 hover:scale-110"
+                  sizes="(max-width: 768px) 33vw, 200px"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center p-2">
+                  <p className="text-xs text-center text-purple-700 dark:text-purple-300 line-clamp-4">{post.content}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Collections Section */}
       <div className="p-6 mt-8 rounded-3xl bg-white dark:bg-gray-800">
