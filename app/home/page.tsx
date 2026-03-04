@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 /* -------   formatting for overall look background etc */
 
 import { useEffect, useMemo, useState } from "react"
