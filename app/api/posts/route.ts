@@ -333,39 +333,53 @@ export async function GET(request: Request) {
       )
   );
 
-  const postsWithAuthors = posts
-    .filter((post) => {
-      if (typeof post.author_id !== "string") {
-        return false;
-      }
+  const filteredPosts = posts.filter((post) => {
+    if (typeof post.author_id !== "string") {
+      return false;
+    }
 
-      const author = authorById.get(post.author_id);
+    const author = authorById.get(post.author_id);
 
-      if (!author) {
-        return false;
-      }
+    if (!author) {
+      return false;
+    }
 
-      const authorCommunityId = extractAuthorCommunityId(author);
-      const belongsToCommunity =
-        (authorCommunityId && viewerCommunityIds.has(authorCommunityId)) ||
-        allowedMemberIds.has(post.author_id);
+    const authorCommunityId = extractAuthorCommunityId(author);
+    const belongsToCommunity =
+      (authorCommunityId && viewerCommunityIds.has(authorCommunityId)) ||
+      allowedMemberIds.has(post.author_id);
 
-      if (!belongsToCommunity) {
-        return false;
-      }
+    if (!belongsToCommunity) {
+      return false;
+    }
 
-      const userType = extractAuthorUserType(author);
+    const userType = extractAuthorUserType(author);
 
-      if (requestedUserType === "student") {
-        return userType === "student";
-      }
+    if (requestedUserType === "student") {
+      return userType === "student";
+    }
 
-      return userType !== "student";
-    })
-    .map((post) => ({
-      ...post,
-      author: post.author_id ? authorById.get(post.author_id) ?? null : null,
-    }));
+    return userType !== "student";
+  });
+
+  // Build isLiked set for the viewer
+  const postIds = filteredPosts.map((p) => p.id).filter(Boolean);
+  let likedSet = new Set<string>();
+
+  if (postIds.length > 0) {
+    const { data: likedRows } = await supabaseAdmin
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", viewerId)
+      .in("post_id", postIds);
+    likedSet = new Set((likedRows ?? []).map((r) => r.post_id as string));
+  }
+
+  const postsWithAuthors = filteredPosts.map((post) => ({
+    ...post,
+    author: post.author_id ? authorById.get(post.author_id) ?? null : null,
+    isLiked: likedSet.has(post.id),
+  }));
 
   return NextResponse.json({ posts: postsWithAuthors }, { status: 200 });
 }

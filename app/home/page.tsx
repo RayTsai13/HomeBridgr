@@ -16,6 +16,7 @@ import { PostComposer } from "./_components/post-composer"
 import { SuggestedFriendsSidebar } from "./_components/suggested-friends-sidebar"
 import { TopLocationsSidebar } from "./_components/top-locations-sidebar"
 import { TopStoriesSidebar } from "./_components/top-stories-sidebar"
+import { NotificationBell } from "./_components/notification-bell"
 import { Home, Compass, PlusCircle, MessageCircle, User, LogOut, Globe, Moon, Sun, GraduationCap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -295,6 +296,9 @@ export default function HomePage() {
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800" />
             </button>
 
+            {/* Notification Bell */}
+            <NotificationBell userId={isGuestMode ? null : sessionUser?.id ?? null} />
+
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
@@ -344,7 +348,7 @@ export default function HomePage() {
           {/* Left Sidebar - Show on Home and Discover views */}
           {(currentView === "home" || currentView === "discover") && (
             <aside className="hidden lg:block flex-shrink-0">
-              <SuggestedFriendsSidebar />
+              <SuggestedFriendsSidebar viewerId={isGuestMode ? null : sessionUser?.id ?? null} />
             </aside>
           )}
           

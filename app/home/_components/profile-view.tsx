@@ -49,6 +49,8 @@ export function ProfileView({ user, isGuest = false }: ProfileViewProps) {
   const [realPosts, setRealPosts] = useState<Post[]>([])
   const [postsLoading, setPostsLoading] = useState(false)
   const mountedRef = useRef(false)
+  const [followersCount, setFollowersCount] = useState<number | null>(null)
+  const [followingCount, setFollowingCount] = useState<number | null>(null)
 
   const profileInfo = useMemo(() => {
     const fallback = currentUser
@@ -64,6 +66,25 @@ export function ProfileView({ user, isGuest = false }: ProfileViewProps) {
       location: fallback.location,
     }
   }, [user, localDisplayName])
+
+  // Load follower/following counts
+  useEffect(() => {
+    if (isGuest || !user?.id) return
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/profiles?userId=${encodeURIComponent(user.id)}`)
+        if (!res.ok) return
+        const data = await res.json()
+        if (data.profile) {
+          setFollowersCount(data.profile.followersCount ?? 0)
+          setFollowingCount(data.profile.followingCount ?? 0)
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    void load()
+  }, [isGuest, user?.id])
 
   // Load real user posts
   useEffect(() => {
@@ -312,7 +333,7 @@ export function ProfileView({ user, isGuest = false }: ProfileViewProps) {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                1.2K
+                {isGuest ? "—" : (followersCount ?? "—")}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Followers
@@ -320,7 +341,7 @@ export function ProfileView({ user, isGuest = false }: ProfileViewProps) {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                342
+                {isGuest ? "—" : (followingCount ?? "—")}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 Following

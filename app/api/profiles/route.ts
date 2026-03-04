@@ -47,25 +47,33 @@ export async function GET(request: Request) {
     );
   }
 
-  const { data, error } = await supabaseAdmin
-    .from(PROFILES_TABLE)
-    .select("id, user_type")
-    .eq("id", userId)
-    .maybeSingle();
+  const [profileResult, followersResult, followingResult] = await Promise.all([
+    supabaseAdmin.from(PROFILES_TABLE).select("id, user_type").eq("id", userId).maybeSingle(),
+    supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("following_id", userId),
+    supabaseAdmin.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", userId),
+  ]);
 
-  if (error) {
+  if (profileResult.error) {
     return NextResponse.json(
       {
         error: "Failed to retrieve profile",
-        details: error.message,
+        details: profileResult.error.message,
       },
       { status: 500 }
     );
   }
 
+  const profile = profileResult.data
+    ? {
+        ...profileResult.data,
+        followersCount: followersResult.count ?? 0,
+        followingCount: followingResult.count ?? 0,
+      }
+    : null;
+
   return NextResponse.json(
     {
-      profile: data ?? null,
+      profile,
     },
     { status: 200 }
   );

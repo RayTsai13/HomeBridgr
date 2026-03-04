@@ -274,7 +274,7 @@ export function HomeFeed({
       <div>
         {(() => {
           const list = posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard key={post.id} post={post} viewerId={viewerId} />
           ))
 
           if (!isCommunityFeed) {

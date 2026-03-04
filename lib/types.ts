@@ -7,6 +7,21 @@ export type User = {
   hometown: string
   location: string
   isInHomeCircle?: boolean
+  followersCount?: number
+  followingCount?: number
+  isFollowedByViewer?: boolean
+}
+
+export type Notification = {
+  id: string
+  type: "like" | "follow" | "comment"
+  actorId: string
+  actorName: string
+  actorAvatar: string | null
+  postId: string | null
+  postCaption: string | null
+  read: boolean
+  createdAt: Date
 }
 
 export type PostType = "user" | "message-summary"

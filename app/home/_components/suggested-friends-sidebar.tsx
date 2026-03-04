@@ -1,105 +1,116 @@
 "use client"
 
 import Image from "next/image"
-import { useState } from "react"
-import { UserPlus } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
-interface SuggestedFriend {
+interface SuggestedUser {
   id: string
-  name: string
-  username: string
-  avatar: string
-  mutualFriends: number
+  displayName: string
+  avatarUrl: string | null
+  bio: string | null
 }
 
-const suggestedFriends: SuggestedFriend[] = [
-  {
-    id: "1",
-    name: "Sarah Johnson",
-    username: "@sarahj",
-    avatar: "/professional-woman.png",
-    mutualFriends: 12,
-  },
-  {
-    id: "2",
-    name: "Michael Chen",
-    username: "@mchen",
-    avatar: "/casual-man.png",
-    mutualFriends: 8,
-  },
-  {
-    id: "3",
-    name: "Emma Davis",
-    username: "@emmad",
-    avatar: "/diverse-woman-smiling.png",
-    mutualFriends: 15,
-  },
-  {
-    id: "4",
-    name: "Alex Rodriguez",
-    username: "@alexr",
-    avatar: "/placeholder-user.jpg",
-    mutualFriends: 5,
-  },
-  {
-    id: "5",
-    name: "Jessica Lee",
-    username: "@jlee",
-    avatar: "/diverse-person-park.png",
-    mutualFriends: 20,
-  },
-]
+interface SuggestedFriendsSidebarProps {
+  viewerId?: string | null
+}
 
-export function SuggestedFriendsSidebar() {
+export function SuggestedFriendsSidebar({ viewerId = null }: SuggestedFriendsSidebarProps) {
+  const { toast } = useToast()
+  const [users, setUsers] = useState<SuggestedUser[]>([])
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set())
 
-  const handleFollow = (id: string) => {
-    setFollowedIds(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(id)) {
-        newSet.delete(id)
-      } else {
-        newSet.add(id)
+  useEffect(() => {
+    const fetchSuggested = async () => {
+      try {
+        const url = viewerId
+          ? `/api/users/suggested?viewerId=${encodeURIComponent(viewerId)}&limit=5`
+          : `/api/users/suggested?limit=5`
+        const res = await fetch(url)
+        if (!res.ok) return
+        const data = await res.json()
+        setUsers(data.users ?? [])
+      } catch {
+        // silently fail
       }
-      return newSet
+    }
+    void fetchSuggested()
+  }, [viewerId])
+
+  const handleFollow = async (id: string) => {
+    if (!viewerId) {
+      toast({ description: "Sign in to follow people." })
+      return
+    }
+
+    const isFollowing = followedIds.has(id)
+
+    // Optimistic update
+    setFollowedIds((prev) => {
+      const next = new Set(prev)
+      if (isFollowing) next.delete(id)
+      else next.add(id)
+      return next
     })
+
+    try {
+      const res = await fetch("/api/follows", {
+        method: isFollowing ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ followerId: viewerId, followingId: id }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      // Revert on error
+      setFollowedIds((prev) => {
+        const next = new Set(prev)
+        if (isFollowing) next.add(id)
+        else next.delete(id)
+        return next
+      })
+      toast({ description: "Failed to update follow.", variant: "destructive" })
+    }
   }
 
   return (
     <div className="w-80 bg-white/60 backdrop-blur-sm rounded-2xl p-5 shadow-sm sticky top-20 h-fit">
       <h2 className="text-lg font-bold text-gray-900 mb-4">Suggested for you</h2>
-      
-      <div className="space-y-4">
-        {suggestedFriends.map((friend) => (
-          <div key={friend.id} className="flex items-center gap-3">
-            <Image
-              src={friend.avatar}
-              alt={friend.name}
-              width={48}
-              height={48}
-              className="w-12 h-12 rounded-full object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm text-gray-900 truncate">
-                {friend.name}
-              </h3>
-              <p className="text-xs text-gray-400">
-                {friend.mutualFriends} mutual friends
-              </p>
+
+      {users.length === 0 ? (
+        <p className="text-sm text-gray-400">No suggestions available.</p>
+      ) : (
+        <div className="space-y-4">
+          {users.map((user) => (
+            <div key={user.id} className="flex items-center gap-3">
+              <Image
+                src={user.avatarUrl || "/placeholder-user.jpg"}
+                alt={user.displayName}
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm text-gray-900 truncate">
+                  {user.displayName}
+                </h3>
+                {user.bio && (
+                  <p className="text-xs text-gray-400 truncate">{user.bio}</p>
+                )}
+              </div>
+              <button
+                onClick={() => void handleFollow(user.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  followedIds.has(user.id)
+                    ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-sky-400 text-white hover:bg-sky-500"
+                }`}
+              >
+                {followedIds.has(user.id) ? "Following" : "Follow"}
+              </button>
             </div>
-            <button
-              onClick={() => handleFollow(friend.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                followedIds.has(friend.id)
-                  ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  : "bg-sky-400 text-white hover:bg-sky-500"
-              }`}
-            >
-              {followedIds.has(friend.id) ? "Following" : "Follow"}
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-5 pt-5 border-t border-purple-100">
         <p className="text-xs text-gray-400">

@@ -21,9 +21,10 @@ type PostComment = {
 
 interface PostCardProps {
   post: Post
+  viewerId?: string | null
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, viewerId = null }: PostCardProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
   const { toast } = useToast()
 
@@ -73,9 +74,30 @@ export function PostCard({ post }: PostCardProps) {
     }
   }, [analysisTerms, canAnalyze, runAnalysis])
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikes(isLiked ? likes - 1 : likes + 1)
+  const handleLike = async () => {
+    if (!viewerId) {
+      toast({ description: "Sign in to like posts.", variant: "destructive" })
+      return
+    }
+    // Optimistic update
+    const wasLiked = isLiked
+    setIsLiked(!wasLiked)
+    setLikes(wasLiked ? likes - 1 : likes + 1)
+    try {
+      const res = await fetch(`/api/posts/${post.id}/likes`, {
+        method: wasLiked ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: viewerId }),
+      })
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setLikes(data.likesCount)
+    } catch {
+      // Revert optimistic update on error
+      setIsLiked(wasLiked)
+      setLikes(wasLiked ? likes : likes - 1)
+      toast({ description: "Failed to update like.", variant: "destructive" })
+    }
   }
 
   const loadComments = useCallback(async () => {
@@ -284,7 +306,7 @@ export function PostCard({ post }: PostCardProps) {
       {/* Actions */}
       <div className="flex items-center gap-8 px-6 py-4 border-t border-purple-100 dark:border-gray-700">
         <button
-          onClick={handleLike}
+          onClick={() => void handleLike()}
           className="flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
         >
           <Heart className={`w-7 h-7 ${isLiked ? "fill-purple-600 text-purple-600 dark:fill-purple-400 dark:text-purple-400" : ""}`} />

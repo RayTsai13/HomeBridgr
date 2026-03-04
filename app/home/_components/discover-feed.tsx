@@ -103,7 +103,7 @@ export function DiscoverFeed({ viewerId = null, isGuest = false }: DiscoverFeedP
       )}
       <div>
         {visiblePosts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard key={post.id} post={post} viewerId={viewerId} />
         ))}
       </div>
     </div>
